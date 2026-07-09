@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
+import Logo from './components/Logo';
 
 const API_URL = 'http://localhost:8001';
 
@@ -10,18 +11,21 @@ const FORM_CONFIGS = {
     id: 'national-id',
     label: { en: 'National ID', np: 'राष्ट्रिय परिचयपत्र' },
     icon: '🪪',
+    description: { en: 'Citizenship & Identity Card', np: 'नागरिकता र परिचय पत्र' },
     fields: ['full_name', 'dob', 'id_number', 'province', 'district', 'municipality', 'ward', 'address', 'issue_date']
   },
   'passport': {
     id: 'passport',
     label: { en: 'Passport', np: 'राहदानी' },
     icon: '📖',
-    fields: ['full_name', 'passport_number', 'nationality', 'dob', 'place_of_birth', 'issue_date', 'expiry_date', 'issuing_authority']
+    description: { en: 'International Travel Document', np: 'अन्तर्राष्ट्रिय यात्रा कागजात' },
+    fields: ['full_name', 'passport_number', 'nationality', 'dob', 'place_of_birth', 'issue_date', 'expiry_date']
   },
   'bank-kyc': {
     id: 'bank-kyc',
     label: { en: 'Bank KYC', np: 'बैंक विवरण' },
     icon: '🏦',
+    description: { en: 'Customer Verification', np: 'ग्राहक प्रमाणीकरण' },
     fields: ['full_name', 'dob', 'citizenship_number', 'province', 'district', 'municipality', 'address', 'phone', 'email', 'account_type', 'occupation']
   }
 };
@@ -247,7 +251,7 @@ function App() {
     }
   };
 
-  // Helper functions to extract address components - ONLY ONCE inside App
+  // Helper functions to extract address components
   const extractProvince = (address) => {
     if (!address) return '';
     
@@ -387,11 +391,9 @@ function App() {
     }
     
     if (fieldKey === 'province') {
-      // First try to extract province directly from address
       const province = extractProvince(extractedData.address_en || extractedData.address_np || '');
       if (province) return province;
       
-      // If not found, try to get it from district
       const district = extractDistrict(extractedData.address_en || extractedData.address_np || '');
       if (district) {
         const mappedProvince = getProvinceFromDistrict(district);
@@ -420,70 +422,114 @@ function App() {
   return (
     <div style={{
       minHeight: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-      padding: '20px'
+      background: 'linear-gradient(145deg, #f8f9ff 0%, #e8ecf8 100%)',
+      padding: '24px',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
     }}>
-      {/* Header */}
+      {/* Header - Premium Glass Effect */}
       <div style={{
-        background: 'rgba(255,255,255,0.95)',
-        backdropFilter: 'blur(10px)',
-        borderRadius: '16px',
-        padding: '16px 24px',
-        marginBottom: '24px',
+        background: 'rgba(255,255,255,0.85)',
+        backdropFilter: 'blur(20px)',
+        borderRadius: '20px',
+        padding: '16px 28px',
+        marginBottom: '28px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.1)'
+        boxShadow: '0 8px 32px rgba(79, 70, 229, 0.12), 0 1px 3px rgba(0,0,0,0.04)',
+        border: '1px solid rgba(255,255,255,0.7)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            padding: '10px',
-            borderRadius: '12px',
-            color: 'white',
-            fontSize: '24px'
-          }}>
-            ⚡
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Logo size={48} />
           <div>
-            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '700', color: '#1a1a2e' }}>SajiloForm</h1>
-            <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '600', textTransform: 'uppercase' }}>
-              {language === 'en' ? 'AI Document Intelligence' : 'एआई कागजात बुद्धिमत्ता'}
-            </span>
+            <h1 style={{ 
+              margin: 0, 
+              fontSize: '26px', 
+              fontWeight: '700', 
+              background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              letterSpacing: '-0.5px'
+            }}>
+              SajiloForm
+            </h1>
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '8px',
+              marginTop: '-2px'
+            }}>
+              <span style={{ 
+                fontSize: '11px', 
+                color: '#6B7280', 
+                fontWeight: '500',
+                letterSpacing: '0.3px',
+                textTransform: 'uppercase'
+              }}>
+                {language === 'en' ? 'AI Document Intelligence' : 'एआई कागजात बुद्धिमत्ता'}
+              </span>
+              <span style={{
+                width: '4px',
+                height: '4px',
+                borderRadius: '50%',
+                background: '#10B981',
+                display: 'inline-block'
+              }} />
+              <span style={{ 
+                fontSize: '10px', 
+                color: '#10B981', 
+                fontWeight: '600'
+              }}>
+                ● Live
+              </span>
+            </div>
           </div>
         </div>
         
-        <button
-          onClick={() => setLanguage(language === 'en' ? 'np' : 'en')}
-          style={{
-            padding: '8px 16px',
-            background: '#f1f5f9',
-            border: 'none',
-            borderRadius: '12px',
-            fontSize: '13px',
-            fontWeight: '500',
-            color: '#475569',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}
-        >
-          🌐 {language === 'en' ? 'नेपाली' : 'English'}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button
+            onClick={() => setLanguage(language === 'en' ? 'np' : 'en')}
+            style={{
+              padding: '8px 18px',
+              background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
+              border: 'none',
+              borderRadius: '12px',
+              fontSize: '13px',
+              fontWeight: '500',
+              color: '#374151',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'scale(1.02)';
+              e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'scale(1)';
+              e.target.style.boxShadow = 'none';
+            }}
+          >
+            <span style={{ fontSize: '16px' }}>🌐</span>
+            <span>{language === 'en' ? 'नेपाली' : 'English'}</span>
+          </button>
+        </div>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs - Premium Design */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
         gap: '8px',
-        marginBottom: '24px',
-        background: 'rgba(255,255,255,0.9)',
+        marginBottom: '28px',
+        background: 'rgba(255,255,255,0.7)',
         backdropFilter: 'blur(10px)',
         borderRadius: '16px',
         padding: '6px',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
+        boxShadow: '0 4px 20px rgba(0,0,0,0.04)',
+        border: '1px solid rgba(255,255,255,0.5)'
       }}>
         {Object.values(FORM_CONFIGS).map((form) => {
           const isActive = activeForm === form.id;
@@ -493,24 +539,47 @@ function App() {
               key={form.id}
               onClick={() => setActiveForm(form.id)}
               style={{
-                padding: '12px',
+                padding: '14px 16px',
                 border: 'none',
                 borderRadius: '12px',
-                fontSize: '14px',
+                fontSize: '15px',
                 fontWeight: '500',
                 cursor: 'pointer',
-                transition: 'all 0.3s',
-                background: isActive ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'transparent',
-                color: isActive ? 'white' : '#64748b',
-                boxShadow: isActive ? '0 4px 16px rgba(102, 126, 234, 0.3)' : 'none',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                background: isActive ? 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)' : 'transparent',
+                color: isActive ? 'white' : '#6B7280',
+                boxShadow: isActive ? '0 8px 24px rgba(79, 70, 229, 0.25)' : 'none',
                 display: 'flex',
+                flexDirection: 'column',
                 alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px'
+                gap: '2px',
+                position: 'relative'
               }}
             >
-              <span style={{ fontSize: '20px' }}>{form.icon}</span>
-              <span>{form.label[language]}</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '22px' }}>{form.icon}</span>
+                <span style={{ fontWeight: isActive ? '600' : '500' }}>{form.label[language]}</span>
+              </div>
+              <span style={{ 
+                fontSize: '10px', 
+                opacity: isActive ? '0.8' : '0.5',
+                fontWeight: '400',
+                letterSpacing: '0.2px'
+              }}>
+                {form.description[language]}
+              </span>
+              {isActive && (
+                <span style={{
+                  position: 'absolute',
+                  bottom: '-6px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: '24px',
+                  height: '3px',
+                  background: 'white',
+                  borderRadius: '4px'
+                }} />
+              )}
             </button>
           );
         })}
@@ -520,35 +589,66 @@ function App() {
       <div style={{
         display: 'grid',
         gridTemplateColumns: '1fr 1fr',
-        gap: '24px'
+        gap: '28px'
       }}>
-        {/* Upload Section */}
+        {/* Upload Section - Premium Card */}
         <div>
           <div
             {...getRootProps()}
             style={{
-              border: `2px dashed ${isDragActive ? '#667eea' : '#d1d5db'}`,
-              borderRadius: '16px',
+              border: `2px dashed ${isDragActive ? '#4F46E5' : '#D1D5DB'}`,
+              borderRadius: '20px',
               padding: '48px 24px',
               textAlign: 'center',
               cursor: 'pointer',
-              transition: 'all 0.3s',
-              background: isDragActive ? 'rgba(102, 126, 234, 0.1)' : 'rgba(255,255,255,0.7)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              background: isDragActive ? 'linear-gradient(135deg, rgba(79,70,229,0.08) 0%, rgba(124,58,237,0.05) 100%)' : 'rgba(255,255,255,0.75)',
               backdropFilter: 'blur(10px)',
-              transform: isDragActive ? 'scale(1.02)' : 'scale(1)'
+              transform: isDragActive ? 'scale(1.02)' : 'scale(1)',
+              boxShadow: isDragActive ? '0 8px 32px rgba(79,70,229,0.15)' : '0 4px 20px rgba(0,0,0,0.04)',
+              borderColor: isDragActive ? '#4F46E5' : '#D1D5DB'
             }}
           >
             <input {...getInputProps()} />
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>📤</div>
-            <h3 style={{ fontSize: '18px', fontWeight: '600', color: '#1a1a2e', margin: '0 0 4px 0' }}>
-              {language === 'en' ? 'Upload Documents' : 'कागजात अपलोड गर्नुहोस्'}
+            <div style={{ 
+              fontSize: '56px', 
+              marginBottom: '16px',
+              display: 'inline-block',
+              animation: isDragActive ? 'bounce 1s infinite' : 'none'
+            }}>📤</div>
+            <h3 style={{ 
+              fontSize: '20px', 
+              fontWeight: '600', 
+              color: '#1F2937', 
+              margin: '0 0 6px 0'
+            }}>
+              {language === 'en' ? 'Drop your documents here' : 'आफ्ना कागजातहरू यहाँ राख्नुहोस्'}
             </h3>
-            <p style={{ color: '#94a3b8', fontSize: '14px', margin: '4px 0 12px 0' }}>
-              {language === 'en' ? 'Drop your images here or click to browse' : 'तपाईंको तस्बिरहरू यहाँ राख्नुहोस् वा क्लिक गरी चयन गर्नुहोस्'}
+            <p style={{ 
+              color: '#6B7280', 
+              fontSize: '14px', 
+              margin: '0 0 16px 0',
+              lineHeight: '1.6'
+            }}>
+              {language === 'en' 
+                ? 'Supports JPG, PNG, WEBP up to 10MB' 
+                : 'JPG, PNG, WEBP समर्थन गर्दछ (अधिकतम १०MB)'}
             </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '12px', color: '#cbd5e1' }}>
+            <div style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              gap: '12px',
+              padding: '8px 20px',
+              background: 'rgba(79,70,229,0.06)',
+              borderRadius: '100px',
+              fontSize: '12px',
+              color: '#4F46E5',
+              fontWeight: '500'
+            }}>
               <span>📷 JPG</span>
+              <span style={{ opacity: '0.3' }}>•</span>
               <span>🖼 PNG</span>
+              <span style={{ opacity: '0.3' }}>•</span>
               <span>🌐 WEBP</span>
             </div>
           </div>
@@ -556,17 +656,17 @@ function App() {
           {error && (
             <div style={{
               marginTop: '16px',
-              padding: '14px 18px',
-              background: '#fef2f2',
-              border: '1px solid #fca5a5',
-              borderRadius: '12px',
-              color: '#991b1b',
+              padding: '14px 20px',
+              background: '#FEF2F2',
+              border: '1px solid #FCA5A5',
+              borderRadius: '14px',
+              color: '#991B1B',
               fontSize: '14px',
               display: 'flex',
               alignItems: 'center',
               gap: '10px'
             }}>
-              <span>❌</span>
+              <span style={{ fontSize: '18px' }}>⚠️</span>
               <span>{error}</span>
             </div>
           )}
@@ -582,12 +682,15 @@ function App() {
                 <div key={img.id} style={{
                   position: 'relative',
                   aspectRatio: '1',
-                  borderRadius: '12px',
+                  borderRadius: '14px',
                   overflow: 'hidden',
-                  border: '1px solid #e2e8f0',
+                  border: '2px solid #F3F4F6',
                   background: 'white',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                }}>
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                  transition: 'transform 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
+                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
                   <img src={img.preview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <button
                     onClick={() => removeImage(img.id)}
@@ -595,16 +698,22 @@ function App() {
                       position: 'absolute',
                       top: '6px',
                       right: '6px',
-                      padding: '4px',
+                      padding: '4px 6px',
                       background: 'rgba(255,255,255,0.9)',
                       border: 'none',
                       borderRadius: '50%',
                       cursor: 'pointer',
-                      opacity: 0.8,
-                      transition: 'opacity 0.2s'
+                      fontSize: '12px',
+                      transition: 'all 0.2s ease'
                     }}
-                    onMouseEnter={(e) => e.target.style.opacity = '1'}
-                    onMouseLeave={(e) => e.target.style.opacity = '0.8'}
+                    onMouseEnter={(e) => {
+                      e.target.style.background = 'white';
+                      e.target.style.transform = 'scale(1.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.background = 'rgba(255,255,255,0.9)';
+                      e.target.style.transform = 'scale(1)';
+                    }}
                   >
                     ✕
                   </button>
@@ -613,9 +722,9 @@ function App() {
                     bottom: '6px',
                     left: '6px',
                     right: '6px',
-                    background: 'rgba(0,0,0,0.6)',
-                    backdropFilter: 'blur(4px)',
-                    padding: '4px 8px',
+                    background: 'rgba(0,0,0,0.65)',
+                    backdropFilter: 'blur(8px)',
+                    padding: '4px 10px',
                     borderRadius: '8px',
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -626,9 +735,9 @@ function App() {
                     <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {img.file.name.length > 12 ? img.file.name.substring(0, 10) + '...' : img.file.name}
                     </span>
-                    {img.status === 'processing' && <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>⏳</span>}
-                    {img.status === 'completed' && <span style={{ color: '#10b981' }}>✅</span>}
-                    {img.status === 'error' && <span style={{ color: '#ef4444' }}>❌</span>}
+                    {img.status === 'processing' && <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite', fontSize: '12px' }}>⏳</span>}
+                    {img.status === 'completed' && <span style={{ color: '#10B981', fontSize: '12px' }}>✅</span>}
+                    {img.status === 'error' && <span style={{ color: '#EF4444', fontSize: '12px' }}>❌</span>}
                   </div>
                 </div>
               ))}
@@ -636,36 +745,52 @@ function App() {
           )}
         </div>
 
-        {/* Form Section */}
+        {/* Form Section - Premium Card */}
         <div style={{
-          background: 'rgba(255,255,255,0.95)',
-          backdropFilter: 'blur(10px)',
-          borderRadius: '16px',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
-          overflow: 'hidden'
+          background: 'rgba(255,255,255,0.85)',
+          backdropFilter: 'blur(20px)',
+          borderRadius: '20px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)',
+          overflow: 'hidden',
+          border: '1px solid rgba(255,255,255,0.7)'
         }}>
           <div style={{
-            padding: '20px 24px',
-            borderBottom: '1px solid #f1f5f9',
+            padding: '20px 28px',
+            borderBottom: '1px solid rgba(0,0,0,0.04)',
             display: 'flex',
             justifyContent: 'space-between',
-            alignItems: 'center'
+            alignItems: 'center',
+            background: 'linear-gradient(135deg, rgba(79,70,229,0.02) 0%, rgba(124,58,237,0.02) 100%)'
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
               <div style={{
-                padding: '8px',
-                background: '#eef2ff',
-                borderRadius: '12px',
-                fontSize: '24px'
+                padding: '10px',
+                background: 'linear-gradient(135deg, rgba(79,70,229,0.12) 0%, rgba(124,58,237,0.08) 100%)',
+                borderRadius: '14px',
+                fontSize: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
               }}>
                 {currentForm.icon}
               </div>
               <div>
-                <h2 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#1a1a2e' }}>
+                <h2 style={{ 
+                  margin: 0, 
+                  fontSize: '20px', 
+                  fontWeight: '600', 
+                  color: '#1F2937',
+                  letterSpacing: '-0.3px'
+                }}>
                   {currentForm.label[language]}
                 </h2>
-                <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: '500' }}>
-                  {language === 'en' ? 'Form' : 'फारम'}
+                <span style={{ 
+                  fontSize: '12px', 
+                  color: '#6B7280', 
+                  fontWeight: '400',
+                  letterSpacing: '0.2px'
+                }}>
+                  {currentForm.description[language]}
                 </span>
               </div>
             </div>
@@ -674,22 +799,27 @@ function App() {
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '8px',
-                background: '#ecfdf5',
-                padding: '6px 12px',
-                borderRadius: '12px',
-                border: '1px solid #a7f3d0'
+                gap: '10px',
+                background: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+                padding: '8px 16px',
+                borderRadius: '100px',
+                border: '1px solid #A7F3D0'
               }}>
-                <div style={{ width: '60px', height: '6px', background: '#d1fae5', borderRadius: '8px', overflow: 'hidden' }}>
+                <span style={{ fontSize: '14px' }}>🎯</span>
+                <div style={{ width: '60px', height: '6px', background: '#D1FAE5', borderRadius: '8px', overflow: 'hidden' }}>
                   <div style={{
                     height: '100%',
-                    background: '#10b981',
+                    background: 'linear-gradient(90deg, #10B981, #059669)',
                     borderRadius: '8px',
                     width: `${extractedData.confidence_score * 100}%`,
-                    transition: 'width 1s ease'
+                    transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)'
                   }} />
                 </div>
-                <span style={{ fontSize: '12px', fontWeight: '600', color: '#065f46' }}>
+                <span style={{ 
+                  fontSize: '13px', 
+                  fontWeight: '600', 
+                  color: '#065F46'
+                }}>
                   {Math.round(extractedData.confidence_score * 100)}%
                 </span>
               </div>
@@ -697,8 +827,8 @@ function App() {
           </div>
           
           <div style={{
-            padding: '24px',
-            maxHeight: '500px',
+            padding: '24px 28px',
+            maxHeight: '480px',
             overflowY: 'auto'
           }}>
             {isLoading ? (
@@ -707,81 +837,115 @@ function App() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                padding: '48px 0'
+                padding: '60px 0'
               }}>
                 <div style={{
-                  width: '40px',
-                  height: '40px',
-                  border: '3px solid #e2e8f0',
-                  borderTopColor: '#667eea',
+                  width: '48px',
+                  height: '48px',
+                  border: '4px solid #E5E7EB',
+                  borderTopColor: '#4F46E5',
                   borderRadius: '50%',
                   animation: 'spin 0.8s linear infinite'
                 }} />
-                <p style={{ marginTop: '16px', fontSize: '14px', fontWeight: '500', color: '#64748b' }}>
-                  {language === 'en' ? 'AI is analyzing your document...' : 'एआईले कागजात विश्लेषण गर्दै...'}
+                <p style={{ 
+                  marginTop: '20px', 
+                  fontSize: '15px', 
+                  fontWeight: '500', 
+                  color: '#4B5563'
+                }}>
+                  {language === 'en' 
+                    ? '🤖 AI is analyzing your document...' 
+                    : '🤖 एआईले कागजात विश्लेषण गर्दै...'}
+                </p>
+                <p style={{
+                  fontSize: '13px',
+                  color: '#9CA3AF',
+                  marginTop: '4px'
+                }}>
+                  {language === 'en' 
+                    ? 'This may take a few seconds' 
+                    : 'केही सेकेन्ड लाग्न सक्छ'}
                 </p>
               </div>
             ) : (
-              fields.map((fieldKey) => {
-                const value = getFieldValue(fieldKey);
-                const isFilled = value && value.length > 0;
-                const label = labels[fieldKey] || fieldKey;
-                
-                return (
-                  <div key={fieldKey} style={{ marginBottom: '16px' }}>
-                    <label style={{
-                      display: 'block',
-                      fontSize: '13px',
-                      fontWeight: '500',
-                      color: '#475569',
-                      marginBottom: '6px'
+              <div style={{ 
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: '16px 20px'
+              }}>
+                {fields.map((fieldKey) => {
+                  const value = getFieldValue(fieldKey);
+                  const isFilled = value && value.length > 0;
+                  const label = labels[fieldKey] || fieldKey;
+                  
+                  return (
+                    <div key={fieldKey} style={{ 
+                      gridColumn: fieldKey === 'address' || fieldKey === 'full_name' ? '1 / -1' : 'auto',
+                      marginBottom: '4px'
                     }}>
-                      {label}
-                      {isFilled && (
-                        <span style={{
-                          fontSize: '11px',
-                          fontWeight: '400',
-                          color: '#059669',
-                          marginLeft: '8px'
-                        }}>
-                          ✅ Auto-filled
-                        </span>
-                      )}
-                    </label>
-                    <input
-                      type="text"
-                      style={{
-                        width: '100%',
-                        padding: '10px 14px',
-                        border: `1px solid ${isFilled ? '#6ee7b7' : '#e2e8f0'}`,
-                        borderRadius: '12px',
-                        fontSize: '14px',
-                        color: '#1a1a2e',
-                        background: isFilled ? '#ecfdf5' : '#f8fafc',
-                        outline: 'none',
-                        transition: 'all 0.2s'
-                      }}
-                      placeholder={language === 'en' ? `Enter ${label.toLowerCase()}` : `${label} प्रविष्ट गर्नुहोस्`}
-                      defaultValue={value}
-                      readOnly={isFilled}
-                      onFocus={(e) => {
-                        if (!isFilled) {
-                          e.target.style.borderColor = '#818cf8';
-                          e.target.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.1)';
-                          e.target.style.background = 'white';
-                        }
-                      }}
-                      onBlur={(e) => {
-                        if (!isFilled) {
-                          e.target.style.borderColor = '#e2e8f0';
-                          e.target.style.boxShadow = 'none';
-                          e.target.style.background = '#f8fafc';
-                        }
-                      }}
-                    />
-                  </div>
-                );
-              })
+                      <label style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontSize: '13px',
+                        fontWeight: '500',
+                        color: '#374151',
+                        marginBottom: '6px'
+                      }}>
+                        <span>{label}</span>
+                        {isFilled && (
+                          <span style={{
+                            fontSize: '10px',
+                            fontWeight: '500',
+                            color: '#059669',
+                            background: '#ECFDF5',
+                            padding: '2px 10px',
+                            borderRadius: '100px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            <span style={{ fontSize: '10px' }}>✅</span>
+                            Auto-filled
+                          </span>
+                        )}
+                      </label>
+                      <input
+                        type="text"
+                        style={{
+                          width: '100%',
+                          padding: '10px 14px',
+                          border: `1.5px solid ${isFilled ? '#6EE7B7' : '#E5E7EB'}`,
+                          borderRadius: '12px',
+                          fontSize: '14px',
+                          color: '#1F2937',
+                          background: isFilled ? 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 50%)' : '#F9FAFB',
+                          outline: 'none',
+                          transition: 'all 0.2s ease',
+                          boxShadow: isFilled ? '0 1px 3px rgba(16, 185, 129, 0.1)' : 'none'
+                        }}
+                        placeholder={language === 'en' ? `Enter ${label.toLowerCase()}` : `${label} प्रविष्ट गर्नुहोस्`}
+                        defaultValue={value}
+                        readOnly={isFilled}
+                        onFocus={(e) => {
+                          if (!isFilled) {
+                            e.target.style.borderColor = '#4F46E5';
+                            e.target.style.boxShadow = '0 0 0 4px rgba(79,70,229,0.08)';
+                            e.target.style.background = 'white';
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (!isFilled) {
+                            e.target.style.borderColor = '#E5E7EB';
+                            e.target.style.boxShadow = 'none';
+                            e.target.style.background = '#F9FAFB';
+                          }
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>
@@ -794,18 +958,29 @@ function App() {
         padding: '16px 0'
       }}>
         <p style={{
-          fontSize: '12px',
-          color: 'rgba(255,255,255,0.7)'
+          fontSize: '13px',
+          color: '#6B7280',
+          fontWeight: '400',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px'
         }}>
-          ✨ {language === 'en' 
-            ? 'AI-powered document extraction • Built for Nepal' 
-            : 'एआई-संचालित कागजात निकासी • नेपालको लागि निर्मित'}
+          <span>✨</span>
+          {language === 'en' 
+            ? 'AI-powered document extraction for modern Nepal' 
+            : 'आधुनिक नेपालको लागि एआई-संचालित कागजात निकासी'}
+          <span>✨</span>
         </p>
       </div>
 
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-8px); }
         }
       `}</style>
     </div>
