@@ -1,11 +1,26 @@
-# Environment & System
+# .gitignore
+
+# 🔑 Private Environment Secrets (CRITICAL)
 .env
 .env.*
-.DS_Store
-__pycache__/
-.venv/
+*.env
 
-# Dependencies & Build outputs
+# 🐍 Backend (Python) Ignore Rules
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+.pytest_cache/
+
+# ⚛️ Frontend (React/Vite) Ignore Rules
 node_modules/
 dist/
-.vite/
+dist-ssr/
+*.local
+
+# 🏢 OS & IDE Files
+.DS_Store
+.vscode/
+.idea/
