@@ -4,13 +4,13 @@ import axios from 'axios';
 
 const API_URL = 'http://localhost:8001';
 
-// Form configurations
+// Form configurations - Updated for each document type
 const FORM_CONFIGS = {
   'national-id': {
     id: 'national-id',
     label: { en: 'National ID', np: 'राष्ट्रिय परिचयपत्र' },
     icon: '🪪',
-    fields: ['full_name', 'dob', 'id_number', 'province', 'district', 'municipality', 'ward', 'address', 'issue_date', 'expiry_date']
+    fields: ['full_name', 'dob', 'id_number', 'province', 'district', 'municipality', 'ward', 'address', 'issue_date']
   },
   'passport': {
     id: 'passport',
@@ -71,6 +71,111 @@ const FIELD_LABELS = {
   }
 };
 
+// Map districts to provinces - Moved outside App
+const getProvinceFromDistrict = (district) => {
+  if (!district) return '';
+  
+  const provinceMap = {
+    // Province 1
+    'Morang': 'Province 1',
+    'Sunsari': 'Province 1',
+    'Jhapa': 'Province 1',
+    'Ilam': 'Province 1',
+    'Panchthar': 'Province 1',
+    'Taplejung': 'Province 1',
+    'Tehrathum': 'Province 1',
+    'Sankhuwasabha': 'Province 1',
+    'Bhojpur': 'Province 1',
+    'Dhankuta': 'Province 1',
+    'Solukhumbu': 'Province 1',
+    'Okhaldhunga': 'Province 1',
+    'Khotang': 'Province 1',
+    'Udayapur': 'Province 1',
+    // Province 2
+    'Saptari': 'Province 2',
+    'Siraha': 'Province 2',
+    'Dhanusa': 'Province 2',
+    'Mahottari': 'Province 2',
+    'Sarlahi': 'Province 2',
+    'Rautahat': 'Province 2',
+    'Bara': 'Province 2',
+    'Parsa': 'Province 2',
+    // Bagmati Province
+    'Kathmandu': 'Bagmati Province',
+    'Lalitpur': 'Bagmati Province',
+    'Bhaktapur': 'Bagmati Province',
+    'Kavrepalanchok': 'Bagmati Province',
+    'Sindhupalchok': 'Bagmati Province',
+    'Rasuwa': 'Bagmati Province',
+    'Dhading': 'Bagmati Province',
+    'Nuwakot': 'Bagmati Province',
+    'Makwanpur': 'Bagmati Province',
+    'Chitwan': 'Bagmati Province',
+    // Gandaki Province
+    'Kaski': 'Gandaki Province',
+    'Pokhara': 'Gandaki Province',
+    'Tanahu': 'Gandaki Province',
+    'Lamjung': 'Gandaki Province',
+    'Syangja': 'Gandaki Province',
+    'Gorkha': 'Gandaki Province',
+    'Manang': 'Gandaki Province',
+    'Mustang': 'Gandaki Province',
+    'Myagdi': 'Gandaki Province',
+    'Nawalpur': 'Gandaki Province',
+    'Parbat': 'Gandaki Province',
+    'Baglung': 'Gandaki Province',
+    // Lumbini Province
+    'Rupandehi': 'Lumbini Province',
+    'Butwal': 'Lumbini Province',
+    'Kapilvastu': 'Lumbini Province',
+    'Nawalparasi': 'Lumbini Province',
+    'Palpa': 'Lumbini Province',
+    'Arghakhanchi': 'Lumbini Province',
+    'Gulmi': 'Lumbini Province',
+    'Rukum': 'Lumbini Province',
+    'Rolpa': 'Lumbini Province',
+    'Pyuthan': 'Lumbini Province',
+    'Dang': 'Lumbini Province',
+    'Banke': 'Lumbini Province',
+    'Bardiya': 'Lumbini Province',
+    // Karnali Province
+    'Surkhet': 'Karnali Province',
+    'Jumla': 'Karnali Province',
+    'Kalikot': 'Karnali Province',
+    'Mugu': 'Karnali Province',
+    'Humla': 'Karnali Province',
+    'Dolpa': 'Karnali Province',
+    'Jajarkot': 'Karnali Province',
+    'Dailekh': 'Karnali Province',
+    'Salyan': 'Karnali Province',
+    'Western Rukum': 'Karnali Province',
+    // Sudurpashchim Province
+    'Kailali': 'Sudurpashchim Province',
+    'Dhangadhi': 'Sudurpashchim Province',
+    'Kanchanpur': 'Sudurpashchim Province',
+    'Dadeldhura': 'Sudurpashchim Province',
+    'Baitadi': 'Sudurpashchim Province',
+    'Darchula': 'Sudurpashchim Province',
+    'Achham': 'Sudurpashchim Province',
+    'Doti': 'Sudurpashchim Province',
+    'Bajura': 'Sudurpashchim Province',
+    'Bajhang': 'Sudurpashchim Province',
+  };
+  
+  if (provinceMap[district]) {
+    return provinceMap[district];
+  }
+  
+  for (const [key, value] of Object.entries(provinceMap)) {
+    if (district.toLowerCase().includes(key.toLowerCase()) || 
+        key.toLowerCase().includes(district.toLowerCase())) {
+      return value;
+    }
+  }
+  
+  return '';
+};
+
 function App() {
   const [language, setLanguage] = useState('en');
   const [activeForm, setActiveForm] = useState('national-id');
@@ -117,6 +222,8 @@ function App() {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       
+      console.log('📄 Extracted Data:', response.data);
+      
       setImages(prev => 
         prev.map(img => img.id === image.id ? { ...img, status: 'completed' } : img)
       );
@@ -140,19 +247,170 @@ function App() {
     }
   };
 
+  // Helper functions to extract address components - ONLY ONCE inside App
+  const extractProvince = (address) => {
+    if (!address) return '';
+    
+    const provinces = ['Province 1', 'Province 2', 'Bagmati Province', 'Gandaki Province', 'Lumbini Province', 'Karnali Province', 'Sudurpashchim Province'];
+    const provinces_short = ['Bagmati', 'Gandaki', 'Lumbini', 'Karnali', 'Sudurpashchim'];
+    const provinces_np = ['प्रदेश १', 'प्रदेश २', 'बागमती', 'गण्डकी', 'लुम्बिनी', 'कर्णाली', 'सुदूरपश्चिम'];
+    
+    for (const p of provinces) {
+      if (address.toLowerCase().includes(p.toLowerCase())) {
+        return p;
+      }
+    }
+    
+    for (const p of provinces_short) {
+      if (address.toLowerCase().includes(p.toLowerCase())) {
+        return p + ' Province';
+      }
+    }
+    
+    for (const p of provinces_np) {
+      if (address.includes(p)) {
+        return p;
+      }
+    }
+    
+    const match = address.match(/Province\s*([\w\s]+?)(?:\s*[,)]|$)/i);
+    if (match) {
+      return match[1].trim();
+    }
+    
+    return '';
+  };
+
+  const extractDistrict = (address) => {
+    if (!address) return '';
+    
+    const districts = [
+      'Kathmandu', 'Lalitpur', 'Bhaktapur', 'Pokhara', 'Chitwan', 
+      'Butwal', 'Biratnagar', 'Janakpur', 'Morang', 'Sunsari', 
+      'Kaski', 'Tanahu', 'Nawalpur', 'Rupandehi', 'Banke', 
+      'Kailali', 'Kanchanpur', 'Dhangadhi', 'Bardiya', 'Surkhet',
+      'Jhapa', 'Ilam', 'Panchthar', 'Taplejung', 'Tehrathum',
+      'Sankhuwasabha', 'Bhojpur', 'Dhankuta', 'Solukhumbu',
+      'Okhaldhunga', 'Khotang', 'Udayapur', 'Saptari', 'Siraha',
+      'Dhanusa', 'Mahottari', 'Sarlahi', 'Rautahat', 'Bara', 'Parsa',
+      'Kavrepalanchok', 'Sindhupalchok', 'Rasuwa', 'Dhading',
+      'Nuwakot', 'Makwanpur', 'Lamjung', 'Syangja', 'Gorkha',
+      'Manang', 'Mustang', 'Myagdi', 'Parbat', 'Baglung',
+      'Kapilvastu', 'Nawalparasi', 'Palpa', 'Arghakhanchi',
+      'Gulmi', 'Rukum', 'Rolpa', 'Pyuthan', 'Dang',
+      'Jumla', 'Kalikot', 'Mugu', 'Humla', 'Dolpa',
+      'Jajarkot', 'Dailekh', 'Salyan', 'Dadeldhura',
+      'Baitadi', 'Darchula', 'Achham', 'Doti', 'Bajura', 'Bajhang'
+    ];
+    
+    for (const d of districts) {
+      if (address.toLowerCase().includes(d.toLowerCase())) {
+        return d;
+      }
+    }
+    
+    const match = address.match(/District\s*[,:]\s*([\w\s]+?)(?:\s*[,)]|$)/i);
+    if (match) {
+      return match[1].trim();
+    }
+    
+    return '';
+  };
+
+  const extractMunicipality = (address) => {
+    if (!address) return '';
+    
+    const patterns = [
+      /Municipality\s*[,:]\s*([^,]+?)(?:\s*[,)]|$)/i,
+      /Metropolis\s*[,:]\s*([^,]+?)(?:\s*[,)]|$)/i,
+      /Sub[-\s]Metropolis\s*[,:]\s*([^,]+?)(?:\s*[,)]|$)/i,
+      /VDC\s*[,:]\s*([^,]+?)(?:\s*[,)]|$)/i,
+      /Nagar\s*([^,]+?)(?:\s*[,)]|$)/i,
+    ];
+    
+    for (const pattern of patterns) {
+      const match = address.match(pattern);
+      if (match) {
+        return match[1].trim();
+      }
+    }
+    
+    if (address.includes('Ward No.')) {
+      const parts = address.split('Ward No.');
+      if (parts.length > 0) {
+        const municipalityPart = parts[0].trim();
+        const lastComma = municipalityPart.lastIndexOf(',');
+        if (lastComma !== -1) {
+          return municipalityPart.substring(lastComma + 1).trim();
+        }
+        return municipalityPart;
+      }
+    }
+    return '';
+  };
+
+  const extractWard = (address) => {
+    if (!address) return '';
+    
+    const patterns = [
+      /Ward\s*No\.?\s*([\d]+)/i,
+      /Ward\s*([\d]+)/i,
+      /वडा\s*नं\.?\s*([\d]+)/i,
+      /वडा\s*([\d]+)/i,
+    ];
+    
+    for (const pattern of patterns) {
+      const match = address.match(pattern);
+      if (match) {
+        return match[1];
+      }
+    }
+    return '';
+  };
+
   const getFieldValue = (fieldKey) => {
     if (!extractedData) return '';
     
+    // Base mapping for simple fields
     const mapping = {
       'full_name': `${extractedData.first_name_en || ''} ${extractedData.last_name_en || ''}`.trim(),
-      'address': extractedData.address_en || '',
+      'address': extractedData.address_en || extractedData.address_np || '',
       'dob': extractedData.dob_ad || extractedData.dob_bs || '',
       'id_number': extractedData.document_number || '',
       'passport_number': extractedData.document_number || '',
       'citizenship_number': extractedData.document_number || '',
+      'issue_date': extractedData.dob_ad || extractedData.dob_bs || '',
     };
     
-    return mapping[fieldKey] || '';
+    if (mapping[fieldKey] !== undefined) {
+      return mapping[fieldKey];
+    }
+    
+    if (fieldKey === 'province') {
+      // First try to extract province directly from address
+      const province = extractProvince(extractedData.address_en || extractedData.address_np || '');
+      if (province) return province;
+      
+      // If not found, try to get it from district
+      const district = extractDistrict(extractedData.address_en || extractedData.address_np || '');
+      if (district) {
+        const mappedProvince = getProvinceFromDistrict(district);
+        if (mappedProvince) return mappedProvince;
+      }
+      return '';
+    }
+    
+    if (fieldKey === 'district') {
+      return extractDistrict(extractedData.address_en || extractedData.address_np || '');
+    }
+    if (fieldKey === 'municipality') {
+      return extractMunicipality(extractedData.address_en || extractedData.address_np || '');
+    }
+    if (fieldKey === 'ward') {
+      return extractWard(extractedData.address_en || extractedData.address_np || '');
+    }
+    
+    return '';
   };
 
   const currentForm = FORM_CONFIGS[activeForm];
@@ -545,7 +803,6 @@ function App() {
         </p>
       </div>
 
-      {/* Add keyframes animation */}
       <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
