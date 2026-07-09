@@ -1,11 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import axios from 'axios';
 import Logo from './components/Logo';
 
 const API_URL = 'http://localhost:8001';
 
-// Form configurations - Updated for each document type
+// ==================== FORM CONFIGURATIONS ====================
 const FORM_CONFIGS = {
   'national-id': {
     id: 'national-id',
@@ -75,132 +75,67 @@ const FIELD_LABELS = {
   }
 };
 
-// Map districts to provinces - Moved outside App
+// ==================== DISTRICT TO PROVINCE MAP ====================
 const getProvinceFromDistrict = (district) => {
   if (!district) return '';
-  
   const provinceMap = {
-    // Province 1
-    'Morang': 'Province 1',
-    'Sunsari': 'Province 1',
-    'Jhapa': 'Province 1',
-    'Ilam': 'Province 1',
-    'Panchthar': 'Province 1',
-    'Taplejung': 'Province 1',
-    'Tehrathum': 'Province 1',
-    'Sankhuwasabha': 'Province 1',
-    'Bhojpur': 'Province 1',
-    'Dhankuta': 'Province 1',
-    'Solukhumbu': 'Province 1',
-    'Okhaldhunga': 'Province 1',
-    'Khotang': 'Province 1',
-    'Udayapur': 'Province 1',
-    // Province 2
-    'Saptari': 'Province 2',
-    'Siraha': 'Province 2',
-    'Dhanusa': 'Province 2',
-    'Mahottari': 'Province 2',
-    'Sarlahi': 'Province 2',
-    'Rautahat': 'Province 2',
-    'Bara': 'Province 2',
-    'Parsa': 'Province 2',
-    // Bagmati Province
-    'Kathmandu': 'Bagmati Province',
-    'Lalitpur': 'Bagmati Province',
-    'Bhaktapur': 'Bagmati Province',
-    'Kavrepalanchok': 'Bagmati Province',
-    'Sindhupalchok': 'Bagmati Province',
-    'Rasuwa': 'Bagmati Province',
-    'Dhading': 'Bagmati Province',
-    'Nuwakot': 'Bagmati Province',
-    'Makwanpur': 'Bagmati Province',
-    'Chitwan': 'Bagmati Province',
-    // Gandaki Province
-    'Kaski': 'Gandaki Province',
-    'Pokhara': 'Gandaki Province',
-    'Tanahu': 'Gandaki Province',
-    'Lamjung': 'Gandaki Province',
-    'Syangja': 'Gandaki Province',
-    'Gorkha': 'Gandaki Province',
-    'Manang': 'Gandaki Province',
-    'Mustang': 'Gandaki Province',
-    'Myagdi': 'Gandaki Province',
-    'Nawalpur': 'Gandaki Province',
-    'Parbat': 'Gandaki Province',
-    'Baglung': 'Gandaki Province',
-    // Lumbini Province
-    'Rupandehi': 'Lumbini Province',
-    'Butwal': 'Lumbini Province',
-    'Kapilvastu': 'Lumbini Province',
-    'Nawalparasi': 'Lumbini Province',
-    'Palpa': 'Lumbini Province',
-    'Arghakhanchi': 'Lumbini Province',
-    'Gulmi': 'Lumbini Province',
-    'Rukum': 'Lumbini Province',
-    'Rolpa': 'Lumbini Province',
-    'Pyuthan': 'Lumbini Province',
-    'Dang': 'Lumbini Province',
-    'Banke': 'Lumbini Province',
-    'Bardiya': 'Lumbini Province',
-    // Karnali Province
-    'Surkhet': 'Karnali Province',
-    'Jumla': 'Karnali Province',
-    'Kalikot': 'Karnali Province',
-    'Mugu': 'Karnali Province',
-    'Humla': 'Karnali Province',
-    'Dolpa': 'Karnali Province',
-    'Jajarkot': 'Karnali Province',
-    'Dailekh': 'Karnali Province',
-    'Salyan': 'Karnali Province',
-    'Western Rukum': 'Karnali Province',
-    // Sudurpashchim Province
-    'Kailali': 'Sudurpashchim Province',
-    'Dhangadhi': 'Sudurpashchim Province',
-    'Kanchanpur': 'Sudurpashchim Province',
-    'Dadeldhura': 'Sudurpashchim Province',
-    'Baitadi': 'Sudurpashchim Province',
-    'Darchula': 'Sudurpashchim Province',
-    'Achham': 'Sudurpashchim Province',
-    'Doti': 'Sudurpashchim Province',
-    'Bajura': 'Sudurpashchim Province',
+    'Morang': 'Province 1', 'Sunsari': 'Province 1', 'Jhapa': 'Province 1', 'Ilam': 'Province 1',
+    'Panchthar': 'Province 1', 'Taplejung': 'Province 1', 'Tehrathum': 'Province 1',
+    'Sankhuwasabha': 'Province 1', 'Bhojpur': 'Province 1', 'Dhankuta': 'Province 1',
+    'Solukhumbu': 'Province 1', 'Okhaldhunga': 'Province 1', 'Khotang': 'Province 1',
+    'Udayapur': 'Province 1', 'Saptari': 'Province 2', 'Siraha': 'Province 2',
+    'Dhanusa': 'Province 2', 'Mahottari': 'Province 2', 'Sarlahi': 'Province 2',
+    'Rautahat': 'Province 2', 'Bara': 'Province 2', 'Parsa': 'Province 2',
+    'Kathmandu': 'Bagmati Province', 'Lalitpur': 'Bagmati Province', 'Bhaktapur': 'Bagmati Province',
+    'Kavrepalanchok': 'Bagmati Province', 'Sindhupalchok': 'Bagmati Province', 'Rasuwa': 'Bagmati Province',
+    'Dhading': 'Bagmati Province', 'Nuwakot': 'Bagmati Province', 'Makwanpur': 'Bagmati Province',
+    'Chitwan': 'Bagmati Province', 'Kaski': 'Gandaki Province', 'Pokhara': 'Gandaki Province',
+    'Tanahu': 'Gandaki Province', 'Lamjung': 'Gandaki Province', 'Syangja': 'Gandaki Province',
+    'Gorkha': 'Gandaki Province', 'Manang': 'Gandaki Province', 'Mustang': 'Gandaki Province',
+    'Myagdi': 'Gandaki Province', 'Nawalpur': 'Gandaki Province', 'Parbat': 'Gandaki Province',
+    'Baglung': 'Gandaki Province', 'Rupandehi': 'Lumbini Province', 'Butwal': 'Lumbini Province',
+    'Kapilvastu': 'Lumbini Province', 'Nawalparasi': 'Lumbini Province', 'Palpa': 'Lumbini Province',
+    'Arghakhanchi': 'Lumbini Province', 'Gulmi': 'Lumbini Province', 'Rukum': 'Lumbini Province',
+    'Rolpa': 'Lumbini Province', 'Pyuthan': 'Lumbini Province', 'Dang': 'Lumbini Province',
+    'Banke': 'Lumbini Province', 'Bardiya': 'Lumbini Province', 'Surkhet': 'Karnali Province',
+    'Jumla': 'Karnali Province', 'Kalikot': 'Karnali Province', 'Mugu': 'Karnali Province',
+    'Humla': 'Karnali Province', 'Dolpa': 'Karnali Province', 'Jajarkot': 'Karnali Province',
+    'Dailekh': 'Karnali Province', 'Salyan': 'Karnali Province', 'Western Rukum': 'Karnali Province',
+    'Kailali': 'Sudurpashchim Province', 'Dhangadhi': 'Sudurpashchim Province', 'Kanchanpur': 'Sudurpashchim Province',
+    'Dadeldhura': 'Sudurpashchim Province', 'Baitadi': 'Sudurpashchim Province', 'Darchula': 'Sudurpashchim Province',
+    'Achham': 'Sudurpashchim Province', 'Doti': 'Sudurpashchim Province', 'Bajura': 'Sudurpashchim Province',
     'Bajhang': 'Sudurpashchim Province',
   };
-  
-  if (provinceMap[district]) {
-    return provinceMap[district];
-  }
-  
+  if (provinceMap[district]) return provinceMap[district];
   for (const [key, value] of Object.entries(provinceMap)) {
-    if (district.toLowerCase().includes(key.toLowerCase()) || 
-        key.toLowerCase().includes(district.toLowerCase())) {
+    if (district.toLowerCase().includes(key.toLowerCase()) || key.toLowerCase().includes(district.toLowerCase())) {
       return value;
     }
   }
-  
   return '';
 };
 
+// ==================== MAIN APP ====================
 function App() {
   const [language, setLanguage] = useState('en');
   const [activeForm, setActiveForm] = useState('national-id');
   const [images, setImages] = useState([]);
-  const [extractedData, setExtractedData] = useState(null);
+  const [selectedImageId, setSelectedImageId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // ---------- DROPZONE ----------
   const onDrop = useCallback((acceptedFiles) => {
     const newImages = acceptedFiles.map(file => ({
       file,
       id: Date.now() + Math.random(),
       preview: URL.createObjectURL(file),
-      status: 'pending'
+      status: 'pending',
+      data: null,
+      side: null,
     }));
-    
     setImages(prev => [...prev, ...newImages]);
-    
-    if (newImages.length > 0) {
-      processImage(newImages[0]);
-    }
+    newImages.forEach(img => processImage(img));
   }, []);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -210,120 +145,126 @@ function App() {
     multiple: true
   });
 
+  // ---------- CLIPBOARD PASTE ----------
+  useEffect(() => {
+    const handlePaste = (e) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      const files = [];
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) files.push(file);
+        }
+      }
+      if (files.length > 0) {
+        e.preventDefault();
+        onDrop(files);
+      }
+    };
+    document.addEventListener('paste', handlePaste);
+    return () => document.removeEventListener('paste', handlePaste);
+  }, [onDrop]);
+
+  // ---------- PROCESS IMAGE ----------
   const processImage = async (image) => {
-    setImages(prev => 
-      prev.map(img => img.id === image.id ? { ...img, status: 'processing' } : img)
-    );
-    
+    setImages(prev => prev.map(img => img.id === image.id ? { ...img, status: 'processing' } : img));
     setIsLoading(true);
     setError(null);
-
     try {
       const formData = new FormData();
       formData.append('file', image.file);
-      
       const response = await axios.post(`${API_URL}/api/v1/extract`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      
-      console.log('📄 Extracted Data:', response.data);
-      
-      setImages(prev => 
-        prev.map(img => img.id === image.id ? { ...img, status: 'completed' } : img)
+      const data = response.data;
+      setImages(prev =>
+        prev.map(img => img.id === image.id ? { ...img, status: 'completed', data } : img)
       );
-      
-      setExtractedData(response.data);
+      // Auto-detect form
+      detectAndSwitchForm(data);
+      // Auto-detect side
+      const side = detectSide(data);
+      setImages(prev =>
+        prev.map(img => img.id === image.id ? { ...img, side } : img)
+      );
+      if (!selectedImageId) setSelectedImageId(image.id);
     } catch (err) {
       const msg = err.response?.data?.detail || 'Failed to process image';
       setError(msg);
-      setImages(prev => 
-        prev.map(img => img.id === image.id ? { ...img, status: 'error' } : img)
-      );
+      setImages(prev => prev.map(img => img.id === image.id ? { ...img, status: 'error' } : img));
     } finally {
       setIsLoading(false);
     }
   };
 
+  // ---------- AUTO-DETECT FORM ----------
+  const detectAndSwitchForm = (data) => {
+    if (!data) return;
+    const docNum = data.document_number || '';
+    if (docNum && /^[A-Z]\d{6,8}$/.test(docNum)) {
+      setActiveForm('passport');
+      return;
+    }
+    const address = (data.address_en || data.address_np || '').toLowerCase();
+    if (address.includes('bank') || address.includes('account')) {
+      setActiveForm('bank-kyc');
+      return;
+    }
+    setActiveForm('national-id');
+  };
+
+  // ---------- AUTO-DETECT SIDE ----------
+  const detectSide = (data) => {
+    if (!data) return null;
+    if (data.document_number) return 'front';
+    if (data.address_en || data.address_np) return 'back';
+    if (data.dob_ad || data.dob_bs) return 'front';
+    return null;
+  };
+
+  // ---------- TOGGLE SIDE ----------
+  const toggleSide = (id) => {
+    setImages(prev =>
+      prev.map(img => img.id === id ? { ...img, side: img.side === 'front' ? 'back' : 'front' } : img)
+    );
+  };
+
   const removeImage = (id) => {
     setImages(prev => prev.filter(img => img.id !== id));
-    if (images.length === 1) {
-      setExtractedData(null);
+    if (selectedImageId === id) {
+      const remaining = images.filter(img => img.id !== id);
+      setSelectedImageId(remaining.length ? remaining[0].id : null);
     }
   };
 
-  // Helper functions to extract address components
+  const selectImage = (id) => setSelectedImageId(id);
+
+  // ---------- ADDRESS EXTRACTION HELPERS ----------
   const extractProvince = (address) => {
     if (!address) return '';
-    
     const provinces = ['Province 1', 'Province 2', 'Bagmati Province', 'Gandaki Province', 'Lumbini Province', 'Karnali Province', 'Sudurpashchim Province'];
-    const provinces_short = ['Bagmati', 'Gandaki', 'Lumbini', 'Karnali', 'Sudurpashchim'];
-    const provinces_np = ['प्रदेश १', 'प्रदेश २', 'बागमती', 'गण्डकी', 'लुम्बिनी', 'कर्णाली', 'सुदूरपश्चिम'];
-    
-    for (const p of provinces) {
-      if (address.toLowerCase().includes(p.toLowerCase())) {
-        return p;
-      }
-    }
-    
-    for (const p of provinces_short) {
-      if (address.toLowerCase().includes(p.toLowerCase())) {
-        return p + ' Province';
-      }
-    }
-    
-    for (const p of provinces_np) {
-      if (address.includes(p)) {
-        return p;
-      }
-    }
-    
+    const short = ['Bagmati', 'Gandaki', 'Lumbini', 'Karnali', 'Sudurpashchim'];
+    const np = ['प्रदेश १', 'प्रदेश २', 'बागमती', 'गण्डकी', 'लुम्बिनी', 'कर्णाली', 'सुदूरपश्चिम'];
+    for (const p of provinces) if (address.toLowerCase().includes(p.toLowerCase())) return p;
+    for (const p of short) if (address.toLowerCase().includes(p.toLowerCase())) return p + ' Province';
+    for (const p of np) if (address.includes(p)) return p;
     const match = address.match(/Province\s*([\w\s]+?)(?:\s*[,)]|$)/i);
-    if (match) {
-      return match[1].trim();
-    }
-    
+    if (match) return match[1].trim();
     return '';
   };
 
   const extractDistrict = (address) => {
     if (!address) return '';
-    
-    const districts = [
-      'Kathmandu', 'Lalitpur', 'Bhaktapur', 'Pokhara', 'Chitwan', 
-      'Butwal', 'Biratnagar', 'Janakpur', 'Morang', 'Sunsari', 
-      'Kaski', 'Tanahu', 'Nawalpur', 'Rupandehi', 'Banke', 
-      'Kailali', 'Kanchanpur', 'Dhangadhi', 'Bardiya', 'Surkhet',
-      'Jhapa', 'Ilam', 'Panchthar', 'Taplejung', 'Tehrathum',
-      'Sankhuwasabha', 'Bhojpur', 'Dhankuta', 'Solukhumbu',
-      'Okhaldhunga', 'Khotang', 'Udayapur', 'Saptari', 'Siraha',
-      'Dhanusa', 'Mahottari', 'Sarlahi', 'Rautahat', 'Bara', 'Parsa',
-      'Kavrepalanchok', 'Sindhupalchok', 'Rasuwa', 'Dhading',
-      'Nuwakot', 'Makwanpur', 'Lamjung', 'Syangja', 'Gorkha',
-      'Manang', 'Mustang', 'Myagdi', 'Parbat', 'Baglung',
-      'Kapilvastu', 'Nawalparasi', 'Palpa', 'Arghakhanchi',
-      'Gulmi', 'Rukum', 'Rolpa', 'Pyuthan', 'Dang',
-      'Jumla', 'Kalikot', 'Mugu', 'Humla', 'Dolpa',
-      'Jajarkot', 'Dailekh', 'Salyan', 'Dadeldhura',
-      'Baitadi', 'Darchula', 'Achham', 'Doti', 'Bajura', 'Bajhang'
-    ];
-    
-    for (const d of districts) {
-      if (address.toLowerCase().includes(d.toLowerCase())) {
-        return d;
-      }
-    }
-    
+    const districts = ['Kathmandu','Lalitpur','Bhaktapur','Pokhara','Chitwan','Butwal','Biratnagar','Janakpur','Morang','Sunsari','Kaski','Tanahu','Nawalpur','Rupandehi','Banke','Kailali','Kanchanpur','Dhangadhi','Bardiya','Surkhet','Jhapa','Ilam','Panchthar','Taplejung','Tehrathum','Sankhuwasabha','Bhojpur','Dhankuta','Solukhumbu','Okhaldhunga','Khotang','Udayapur','Saptari','Siraha','Dhanusa','Mahottari','Sarlahi','Rautahat','Bara','Parsa','Kavrepalanchok','Sindhupalchok','Rasuwa','Dhading','Nuwakot','Makwanpur','Lamjung','Syangja','Gorkha','Manang','Mustang','Myagdi','Parbat','Baglung','Kapilvastu','Nawalparasi','Palpa','Arghakhanchi','Gulmi','Rukum','Rolpa','Pyuthan','Dang','Jumla','Kalikot','Mugu','Humla','Dolpa','Jajarkot','Dailekh','Salyan','Dadeldhura','Baitadi','Darchula','Achham','Doti','Bajura','Bajhang'];
+    for (const d of districts) if (address.toLowerCase().includes(d.toLowerCase())) return d;
     const match = address.match(/District\s*[,:]\s*([\w\s]+?)(?:\s*[,)]|$)/i);
-    if (match) {
-      return match[1].trim();
-    }
-    
+    if (match) return match[1].trim();
     return '';
   };
 
   const extractMunicipality = (address) => {
     if (!address) return '';
-    
     const patterns = [
       /Municipality\s*[,:]\s*([^,]+?)(?:\s*[,)]|$)/i,
       /Metropolis\s*[,:]\s*([^,]+?)(?:\s*[,)]|$)/i,
@@ -331,23 +272,16 @@ function App() {
       /VDC\s*[,:]\s*([^,]+?)(?:\s*[,)]|$)/i,
       /Nagar\s*([^,]+?)(?:\s*[,)]|$)/i,
     ];
-    
-    for (const pattern of patterns) {
-      const match = address.match(pattern);
-      if (match) {
-        return match[1].trim();
-      }
+    for (const p of patterns) {
+      const m = address.match(p);
+      if (m) return m[1].trim();
     }
-    
     if (address.includes('Ward No.')) {
       const parts = address.split('Ward No.');
-      if (parts.length > 0) {
-        const municipalityPart = parts[0].trim();
-        const lastComma = municipalityPart.lastIndexOf(',');
-        if (lastComma !== -1) {
-          return municipalityPart.substring(lastComma + 1).trim();
-        }
-        return municipalityPart;
+      if (parts.length) {
+        const mp = parts[0].trim();
+        const lastComma = mp.lastIndexOf(',');
+        return lastComma !== -1 ? mp.substring(lastComma + 1).trim() : mp;
       }
     }
     return '';
@@ -355,63 +289,50 @@ function App() {
 
   const extractWard = (address) => {
     if (!address) return '';
-    
     const patterns = [
       /Ward\s*No\.?\s*([\d]+)/i,
       /Ward\s*([\d]+)/i,
       /वडा\s*नं\.?\s*([\d]+)/i,
       /वडा\s*([\d]+)/i,
     ];
-    
-    for (const pattern of patterns) {
-      const match = address.match(pattern);
-      if (match) {
-        return match[1];
-      }
+    for (const p of patterns) {
+      const m = address.match(p);
+      if (m) return m[1];
     }
     return '';
   };
 
+  // ---------- GET FIELD VALUE ----------
   const getFieldValue = (fieldKey) => {
-    if (!extractedData) return '';
-    
-    // Base mapping for simple fields
+    const selected = images.find(img => img.id === selectedImageId);
+    const data = selected?.data || null;
+    if (!data) return '';
+
     const mapping = {
-      'full_name': `${extractedData.first_name_en || ''} ${extractedData.last_name_en || ''}`.trim(),
-      'address': extractedData.address_en || extractedData.address_np || '',
-      'dob': extractedData.dob_ad || extractedData.dob_bs || '',
-      'id_number': extractedData.document_number || '',
-      'passport_number': extractedData.document_number || '',
-      'citizenship_number': extractedData.document_number || '',
-      'issue_date': extractedData.dob_ad || extractedData.dob_bs || '',
+      'full_name': `${data.first_name_en || ''} ${data.last_name_en || ''}`.trim(),
+      'address': data.address_en || data.address_np || '',
+      'dob': data.dob_ad || data.dob_bs || '',
+      'id_number': data.document_number || '',
+      'passport_number': data.document_number || '',
+      'citizenship_number': data.document_number || '',
+      'issue_date': data.dob_ad || data.dob_bs || '',
     };
-    
-    if (mapping[fieldKey] !== undefined) {
-      return mapping[fieldKey];
-    }
-    
+    if (mapping[fieldKey] !== undefined) return mapping[fieldKey];
+
+    const address = data.address_en || data.address_np || '';
     if (fieldKey === 'province') {
-      const province = extractProvince(extractedData.address_en || extractedData.address_np || '');
-      if (province) return province;
-      
-      const district = extractDistrict(extractedData.address_en || extractedData.address_np || '');
+      const p = extractProvince(address);
+      if (p) return p;
+      const district = extractDistrict(address);
       if (district) {
-        const mappedProvince = getProvinceFromDistrict(district);
-        if (mappedProvince) return mappedProvince;
+        const mapped = getProvinceFromDistrict(district);
+        if (mapped) return mapped;
       }
       return '';
     }
-    
-    if (fieldKey === 'district') {
-      return extractDistrict(extractedData.address_en || extractedData.address_np || '');
-    }
-    if (fieldKey === 'municipality') {
-      return extractMunicipality(extractedData.address_en || extractedData.address_np || '');
-    }
-    if (fieldKey === 'ward') {
-      return extractWard(extractedData.address_en || extractedData.address_np || '');
-    }
-    
+    if (fieldKey === 'district') return extractDistrict(address);
+    if (fieldKey === 'municipality') return extractMunicipality(address);
+    if (fieldKey === 'ward') return extractWard(address);
     return '';
   };
 
@@ -419,66 +340,61 @@ function App() {
   const labels = FIELD_LABELS[language] || FIELD_LABELS['en'];
   const fields = currentForm.fields || [];
 
+  // ==================== RENDER ====================
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(145deg, #f8f9ff 0%, #e8ecf8 100%)',
-      padding: '24px',
-      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-    }}>
-      {/* Header - Premium Glass Effect */}
+    <div className="app-background">
+      {/* ---- ENHANCED HEADER ---- */}
       <div style={{
-        background: 'rgba(255,255,255,0.85)',
-        backdropFilter: 'blur(20px)',
-        borderRadius: '20px',
-        padding: '16px 28px',
-        marginBottom: '28px',
+        background: 'rgba(255,255,255,0.92)',
+        backdropFilter: 'blur(24px)',
+        borderRadius: '24px',
+        padding: '12px 32px',
+        marginBottom: '32px',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        boxShadow: '0 8px 32px rgba(79, 70, 229, 0.12), 0 1px 3px rgba(0,0,0,0.04)',
-        border: '1px solid rgba(255,255,255,0.7)'
+        boxShadow: '0 8px 40px rgba(79,70,229,0.15), 0 1px 4px rgba(0,0,0,0.04)',
+        border: '1px solid rgba(255,255,255,0.8)',
+        transition: 'all 0.3s ease'
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1px' }}>
-          <Logo size={200} />
+          <Logo size={100} />
           <div>
-            <h1 style={{ 
-              margin: 0, 
-              fontSize: '26px', 
-              fontWeight: '700', 
+            <h1 style={{
+              margin: 0,
+              fontSize: '28px',
+              fontWeight: '700',
               background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 50%, #EC4899 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              letterSpacing: '-0.5px'
+              letterSpacing: '-0.5px',
+              lineHeight: 1.2
             }}>
               SajiloForm
             </h1>
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px',
-              marginTop: '-2px'
-            }}>
-              <span style={{ 
-                fontSize: '11px', 
-                color: '#6B7280', 
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '0px' }}>
+              <span style={{
+                fontSize: '12px',
+                color: '#6B7280',
                 fontWeight: '500',
-                letterSpacing: '0.3px',
+                letterSpacing: '0.4px',
                 textTransform: 'uppercase'
               }}>
                 {language === 'en' ? 'AI Document Intelligence' : 'एआई कागजात बुद्धिमत्ता'}
               </span>
               <span style={{
-                width: '4px',
-                height: '4px',
+                width: '5px',
+                height: '5px',
                 borderRadius: '50%',
                 background: '#10B981',
-                display: 'inline-block'
+                display: 'inline-block',
+                animation: 'pulse-dot 2s infinite'
               }} />
-              <span style={{ 
-                fontSize: '10px', 
-                color: '#10B981', 
-                fontWeight: '600'
+              <span style={{
+                fontSize: '10px',
+                color: '#10B981',
+                fontWeight: '600',
+                letterSpacing: '0.3px'
               }}>
                 ● Live
               </span>
@@ -486,39 +402,48 @@ function App() {
           </div>
         </div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <button
-            onClick={() => setLanguage(language === 'en' ? 'np' : 'en')}
-            style={{
-              padding: '8px 18px',
-              background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
-              border: 'none',
-              borderRadius: '12px',
-              fontSize: '13px',
-              fontWeight: '500',
-              color: '#374151',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'scale(1.02)';
-              e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'scale(1)';
-              e.target.style.boxShadow = 'none';
-            }}
-          >
-            <span style={{ fontSize: '16px' }}>🌐</span>
-            <span>{language === 'en' ? 'नेपाली' : 'English'}</span>
-          </button>
-        </div>
+        <button
+          onClick={() => setLanguage(language === 'en' ? 'np' : 'en')}
+          style={{
+            padding: '10px 22px',
+            background: 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)',
+            border: 'none',
+            borderRadius: '14px',
+            fontSize: '14px',
+            fontWeight: '600',
+            color: '#374151',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            transition: 'all 0.25s ease',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+            border: '1px solid rgba(255,255,255,0.6)'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 8px 20px rgba(79,70,229,0.15)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)';
+            e.currentTarget.style.background = 'linear-gradient(135deg, #F3F4F6 0%, #E5E7EB 100%)';
+          }}
+        >
+          <span style={{ fontSize: '18px' }}>🌐</span>
+          <span>{language === 'en' ? 'नेपाली' : 'English'}</span>
+          <span style={{
+            fontSize: '10px',
+            opacity: 0.6,
+            fontWeight: '400'
+          }}>
+            {language === 'en' ? 'Switch' : 'बदल्नुहोस्'}
+          </span>
+        </button>
       </div>
 
-      {/* Tabs - Premium Design */}
+      {/* ---- TABS (unchanged) ---- */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
@@ -533,7 +458,6 @@ function App() {
       }}>
         {Object.values(FORM_CONFIGS).map((form) => {
           const isActive = activeForm === form.id;
-          
           return (
             <button
               key={form.id}
@@ -545,10 +469,10 @@ function App() {
                 fontSize: '15px',
                 fontWeight: '500',
                 cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'all 0.3s',
                 background: isActive ? 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)' : 'transparent',
                 color: isActive ? 'white' : '#6B7280',
-                boxShadow: isActive ? '0 8px 24px rgba(79, 70, 229, 0.25)' : 'none',
+                boxShadow: isActive ? '0 8px 24px rgba(79,70,229,0.25)' : 'none',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -558,15 +482,10 @@ function App() {
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '22px' }}>{form.icon}</span>
-                <span style={{ fontWeight: isActive ? '600' : '500' }}>{form.label[language]}</span>
+                <span>{form.label[language]}</span>
               </div>
-              <span style={{ 
-                fontSize: '10px', 
-                opacity: isActive ? '0.8' : '0.5',
-                fontWeight: '400',
-                letterSpacing: '0.2px'
-              }}>
-                {form.description[language]}
+              <span style={{ fontSize: '10px', opacity: isActive ? '0.8' : '0.5' }}>
+                {form.description?.[language]}
               </span>
               {isActive && (
                 <span style={{
@@ -585,13 +504,9 @@ function App() {
         })}
       </div>
 
-      {/* Main Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '28px'
-      }}>
-        {/* Upload Section - Premium Card */}
+      {/* ---- MAIN GRID (unchanged) ---- */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px' }}>
+        {/* UPLOAD SECTION */}
         <div>
           <div
             {...getRootProps()}
@@ -601,42 +516,29 @@ function App() {
               padding: '48px 24px',
               textAlign: 'center',
               cursor: 'pointer',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              background: isDragActive ? 'linear-gradient(135deg, rgba(79,70,229,0.08) 0%, rgba(124,58,237,0.05) 100%)' : 'rgba(255,255,255,0.75)',
+              transition: 'all 0.3s',
+              background: isDragActive ? 'rgba(79,70,229,0.08)' : 'rgba(255,255,255,0.75)',
               backdropFilter: 'blur(10px)',
               transform: isDragActive ? 'scale(1.02)' : 'scale(1)',
-              boxShadow: isDragActive ? '0 8px 32px rgba(79,70,229,0.15)' : '0 4px 20px rgba(0,0,0,0.04)',
-              borderColor: isDragActive ? '#4F46E5' : '#D1D5DB'
+              boxShadow: isDragActive ? '0 8px 32px rgba(79,70,229,0.15)' : '0 4px 20px rgba(0,0,0,0.04)'
             }}
           >
             <input {...getInputProps()} />
-            <div style={{ 
-              fontSize: '56px', 
+            <div style={{
+              fontSize: '56px',
               marginBottom: '16px',
               display: 'inline-block',
               animation: isDragActive ? 'bounce 1s infinite' : 'none'
             }}>📤</div>
-            <h3 style={{ 
-              fontSize: '20px', 
-              fontWeight: '600', 
-              color: '#1F2937', 
-              margin: '0 0 6px 0'
-            }}>
+            <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1F2937', margin: '0 0 6px 0' }}>
               {language === 'en' ? 'Drop your documents here' : 'आफ्ना कागजातहरू यहाँ राख्नुहोस्'}
             </h3>
-            <p style={{ 
-              color: '#6B7280', 
-              fontSize: '14px', 
-              margin: '0 0 16px 0',
-              lineHeight: '1.6'
-            }}>
-              {language === 'en' 
-                ? 'Supports JPG, PNG, WEBP up to 10MB' 
-                : 'JPG, PNG, WEBP समर्थन गर्दछ (अधिकतम १०MB)'}
+            <p style={{ color: '#6B7280', fontSize: '14px', margin: '0 0 16px 0' }}>
+              {language === 'en' ? 'Supports JPG, PNG, WEBP up to 10MB' : 'JPG, PNG, WEBP समर्थन गर्दछ (अधिकतम १०MB)'}
             </p>
-            <div style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
               gap: '12px',
               padding: '8px 20px',
               background: 'rgba(79,70,229,0.06)',
@@ -651,6 +553,9 @@ function App() {
               <span style={{ opacity: '0.3' }}>•</span>
               <span>🌐 WEBP</span>
             </div>
+            <p style={{ fontSize: '12px', color: '#94a3b8', marginTop: '12px' }}>
+              {language === 'en' ? 'You can also paste images (Ctrl+V)' : 'तपाईं तस्बिर पेस्ट गर्न सक्नुहुन्छ (Ctrl+V)'}
+            </p>
           </div>
 
           {error && (
@@ -679,21 +584,58 @@ function App() {
               marginTop: '16px'
             }}>
               {images.map((img) => (
-                <div key={img.id} style={{
-                  position: 'relative',
-                  aspectRatio: '1',
-                  borderRadius: '14px',
-                  overflow: 'hidden',
-                  border: '2px solid #F3F4F6',
-                  background: 'white',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
-                  transition: 'transform 0.2s ease'
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.02)'}
-                onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}>
+                <div
+                  key={img.id}
+                  onClick={() => selectImage(img.id)}
+                  style={{
+                    position: 'relative',
+                    aspectRatio: '1',
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    border: `2px solid ${selectedImageId === img.id ? '#4F46E5' : '#F3F4F6'}`,
+                    background: 'white',
+                    boxShadow: selectedImageId === img.id ? '0 0 0 3px rgba(79,70,229,0.3)' : '0 4px 12px rgba(0,0,0,0.04)',
+                    transition: 'all 0.2s ease',
+                    cursor: 'pointer'
+                  }}
+                >
                   <img src={img.preview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  {/* Side badge */}
+                  {img.side && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '6px',
+                      left: '6px',
+                      background: img.side === 'front' ? '#4F46E5' : '#EC4899',
+                      color: 'white',
+                      fontSize: '8px',
+                      fontWeight: 'bold',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      textTransform: 'uppercase'
+                    }}>
+                      {img.side}
+                    </div>
+                  )}
+                  {/* Toggle side button */}
                   <button
-                    onClick={() => removeImage(img.id)}
+                    onClick={(e) => { e.stopPropagation(); toggleSide(img.id); }}
+                    style={{
+                      position: 'absolute',
+                      top: '6px',
+                      right: '28px',
+                      padding: '2px 6px',
+                      background: 'rgba(255,255,255,0.8)',
+                      border: 'none',
+                      borderRadius: '4px',
+                      fontSize: '10px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    ↻
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); removeImage(img.id); }}
                     style={{
                       position: 'absolute',
                       top: '6px',
@@ -703,16 +645,7 @@ function App() {
                       border: 'none',
                       borderRadius: '50%',
                       cursor: 'pointer',
-                      fontSize: '12px',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.target.style.background = 'white';
-                      e.target.style.transform = 'scale(1.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.target.style.background = 'rgba(255,255,255,0.9)';
-                      e.target.style.transform = 'scale(1)';
+                      fontSize: '12px'
                     }}
                   >
                     ✕
@@ -735,9 +668,9 @@ function App() {
                     <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {img.file.name.length > 12 ? img.file.name.substring(0, 10) + '...' : img.file.name}
                     </span>
-                    {img.status === 'processing' && <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite', fontSize: '12px' }}>⏳</span>}
-                    {img.status === 'completed' && <span style={{ color: '#10B981', fontSize: '12px' }}>✅</span>}
-                    {img.status === 'error' && <span style={{ color: '#EF4444', fontSize: '12px' }}>❌</span>}
+                    {img.status === 'processing' && <span style={{ animation: 'spin 0.8s linear infinite' }}>⏳</span>}
+                    {img.status === 'completed' && <span style={{ color: '#10B981' }}>✅</span>}
+                    {img.status === 'error' && <span style={{ color: '#EF4444' }}>❌</span>}
                   </div>
                 </div>
               ))}
@@ -745,12 +678,12 @@ function App() {
           )}
         </div>
 
-        {/* Form Section - Premium Card */}
+        {/* FORM SECTION */}
         <div style={{
           background: 'rgba(255,255,255,0.85)',
           backdropFilter: 'blur(20px)',
           borderRadius: '20px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.06), 0 1px 3px rgba(0,0,0,0.04)',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.06)',
           overflow: 'hidden',
           border: '1px solid rgba(255,255,255,0.7)'
         }}>
@@ -767,78 +700,53 @@ function App() {
                 padding: '10px',
                 background: 'linear-gradient(135deg, rgba(79,70,229,0.12) 0%, rgba(124,58,237,0.08) 100%)',
                 borderRadius: '14px',
-                fontSize: '28px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
+                fontSize: '28px'
               }}>
                 {currentForm.icon}
               </div>
               <div>
-                <h2 style={{ 
-                  margin: 0, 
-                  fontSize: '20px', 
-                  fontWeight: '600', 
-                  color: '#1F2937',
-                  letterSpacing: '-0.3px'
-                }}>
+                <h2 style={{ margin: 0, fontSize: '20px', fontWeight: '600', color: '#1F2937' }}>
                   {currentForm.label[language]}
                 </h2>
-                <span style={{ 
-                  fontSize: '12px', 
-                  color: '#6B7280', 
-                  fontWeight: '400',
-                  letterSpacing: '0.2px'
-                }}>
-                  {currentForm.description[language]}
+                <span style={{ fontSize: '12px', color: '#6B7280' }}>
+                  {currentForm.description?.[language]}
                 </span>
               </div>
             </div>
-            
-            {extractedData && extractedData.confidence_score > 0 && (
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                background: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
-                padding: '8px 16px',
-                borderRadius: '100px',
-                border: '1px solid #A7F3D0'
-              }}>
-                <span style={{ fontSize: '14px' }}>🎯</span>
-                <div style={{ width: '60px', height: '6px', background: '#D1FAE5', borderRadius: '8px', overflow: 'hidden' }}>
-                  <div style={{
-                    height: '100%',
-                    background: 'linear-gradient(90deg, #10B981, #059669)',
-                    borderRadius: '8px',
-                    width: `${extractedData.confidence_score * 100}%`,
-                    transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)'
-                  }} />
-                </div>
-                <span style={{ 
-                  fontSize: '13px', 
-                  fontWeight: '600', 
-                  color: '#065F46'
+            {(() => {
+              const selected = images.find(img => img.id === selectedImageId);
+              const data = selected?.data;
+              return data?.confidence_score > 0 && (
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  background: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
+                  padding: '8px 16px',
+                  borderRadius: '100px',
+                  border: '1px solid #A7F3D0'
                 }}>
-                  {Math.round(extractedData.confidence_score * 100)}%
-                </span>
-              </div>
-            )}
+                  <span style={{ fontSize: '14px' }}>🎯</span>
+                  <div style={{ width: '60px', height: '6px', background: '#D1FAE5', borderRadius: '8px', overflow: 'hidden' }}>
+                    <div style={{
+                      height: '100%',
+                      background: 'linear-gradient(90deg, #10B981, #059669)',
+                      borderRadius: '8px',
+                      width: `${data.confidence_score * 100}%`,
+                      transition: 'width 1s'
+                    }} />
+                  </div>
+                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#065F46' }}>
+                    {Math.round(data.confidence_score * 100)}%
+                  </span>
+                </div>
+              );
+            })()}
           </div>
-          
-          <div style={{
-            padding: '24px 28px',
-            maxHeight: '480px',
-            overflowY: 'auto'
-          }}>
-            {isLoading ? (
-              <div style={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: '60px 0'
-              }}>
+
+          <div style={{ padding: '24px 28px', maxHeight: '480px', overflowY: 'auto' }}>
+            {isLoading && images.some(img => img.status === 'processing') ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '60px 0' }}>
                 <div style={{
                   width: '48px',
                   height: '48px',
@@ -847,66 +755,26 @@ function App() {
                   borderRadius: '50%',
                   animation: 'spin 0.8s linear infinite'
                 }} />
-                <p style={{ 
-                  marginTop: '20px', 
-                  fontSize: '15px', 
-                  fontWeight: '500', 
-                  color: '#4B5563'
-                }}>
-                  {language === 'en' 
-                    ? '🤖 AI is analyzing your document...' 
-                    : '🤖 एआईले कागजात विश्लेषण गर्दै...'}
+                <p style={{ marginTop: '20px', fontSize: '15px', fontWeight: '500', color: '#4B5563' }}>
+                  {language === 'en' ? '🤖 AI is analyzing your documents...' : '🤖 एआईले कागजात विश्लेषण गर्दै...'}
                 </p>
-                <p style={{
-                  fontSize: '13px',
-                  color: '#9CA3AF',
-                  marginTop: '4px'
-                }}>
-                  {language === 'en' 
-                    ? 'This may take a few seconds' 
-                    : 'केही सेकेन्ड लाग्न सक्छ'}
+                <p style={{ fontSize: '13px', color: '#9CA3AF', marginTop: '4px' }}>
+                  {language === 'en' ? 'Processing all uploaded images' : 'सबै अपलोड गरिएका तस्बिरहरू प्रशोधन गर्दै'}
                 </p>
               </div>
             ) : (
-              <div style={{ 
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: '16px 20px'
-              }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px 20px' }}>
                 {fields.map((fieldKey) => {
                   const value = getFieldValue(fieldKey);
                   const isFilled = value && value.length > 0;
                   const label = labels[fieldKey] || fieldKey;
-                  
                   return (
-                    <div key={fieldKey} style={{ 
-                      gridColumn: fieldKey === 'address' || fieldKey === 'full_name' ? '1 / -1' : 'auto',
-                      marginBottom: '4px'
-                    }}>
-                      <label style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        fontSize: '13px',
-                        fontWeight: '500',
-                        color: '#374151',
-                        marginBottom: '6px'
-                      }}>
+                    <div key={fieldKey} style={{ gridColumn: fieldKey === 'address' || fieldKey === 'full_name' ? '1 / -1' : 'auto', marginBottom: '4px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
                         <span>{label}</span>
                         {isFilled && (
-                          <span style={{
-                            fontSize: '10px',
-                            fontWeight: '500',
-                            color: '#059669',
-                            background: '#ECFDF5',
-                            padding: '2px 10px',
-                            borderRadius: '100px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px'
-                          }}>
-                            <span style={{ fontSize: '10px' }}>✅</span>
-                            Auto-filled
+                          <span style={{ fontSize: '10px', fontWeight: '500', color: '#059669', background: '#ECFDF5', padding: '2px 10px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ fontSize: '10px' }}>✅</span>Auto-filled
                           </span>
                         )}
                       </label>
@@ -921,26 +789,11 @@ function App() {
                           color: '#1F2937',
                           background: isFilled ? 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 50%)' : '#F9FAFB',
                           outline: 'none',
-                          transition: 'all 0.2s ease',
-                          boxShadow: isFilled ? '0 1px 3px rgba(16, 185, 129, 0.1)' : 'none'
+                          transition: 'all 0.2s'
                         }}
                         placeholder={language === 'en' ? `Enter ${label.toLowerCase()}` : `${label} प्रविष्ट गर्नुहोस्`}
                         defaultValue={value}
                         readOnly={isFilled}
-                        onFocus={(e) => {
-                          if (!isFilled) {
-                            e.target.style.borderColor = '#4F46E5';
-                            e.target.style.boxShadow = '0 0 0 4px rgba(79,70,229,0.08)';
-                            e.target.style.background = 'white';
-                          }
-                        }}
-                        onBlur={(e) => {
-                          if (!isFilled) {
-                            e.target.style.borderColor = '#E5E7EB';
-                            e.target.style.boxShadow = 'none';
-                            e.target.style.background = '#F9FAFB';
-                          }
-                        }}
                       />
                     </div>
                   );
@@ -951,37 +804,19 @@ function App() {
         </div>
       </div>
 
-      {/* Footer */}
-      <div style={{
-        marginTop: '32px',
-        textAlign: 'center',
-        padding: '16px 0'
-      }}>
-        <p style={{
-          fontSize: '13px',
-          color: '#6B7280',
-          fontWeight: '400',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: '8px'
-        }}>
+      {/* ---- FOOTER ---- */}
+      <div style={{ marginTop: '32px', textAlign: 'center', padding: '16px 0' }}>
+        <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
           <span>✨</span>
-          {language === 'en' 
-            ? 'AI-powered document extraction for modern Nepal' 
-            : 'आधुनिक नेपालको लागि एआई-संचालित कागजात निकासी'}
+          {language === 'en' ? 'AI-powered document extraction for modern Nepal' : 'आधुनिक नेपालको लागि एआई-संचालित कागजात निकासी'}
           <span>✨</span>
         </p>
       </div>
 
       <style>{`
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-8px); }
-        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes pulse-dot { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
       `}</style>
     </div>
   );

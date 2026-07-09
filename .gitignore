@@ -1,30 +1,33 @@
-# Backend
+# ===== Backend =====
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
 .Python
 env/
 venv/
 ENV/
 env.bak/
 venv.bak/
+.pytest_cache/
 *.log
+*.sqlite3
 
-# Frontend
+# ===== Frontend =====
 demo-portal/node_modules/
 demo-portal/dist/
 demo-portal/dist-ssr/
 demo-portal/*.local
 demo-portal/.env
 demo-portal/.env.local
+demo-portal/.vite/
 
-# Environment
+# ===== Environment Variables =====
 .env
 .env.*
 *.env
 
-# IDE
+# ===== IDE =====
 .vscode/
 .idea/
 *.swp
@@ -32,11 +35,6 @@ demo-portal/.env.local
 *~
 .DS_Store
 
-# OS
+# ===== OS =====
 Thumbs.db
 .DS_Store
-
-# Build outputs
-*.py[cod]
-*.so
-.Python
