@@ -1,0 +1,11 @@
+# Environment & System
+.env
+.env.*
+.DS_Store
+__pycache__/
+.venv/
+
+# Dependencies & Build outputs
+node_modules/
+dist/
+.vite/

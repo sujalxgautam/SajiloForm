@@ -1,117 +1,85 @@
+# backend/main.py
 import os
-import json
-import base64
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from litellm import Router
 from dotenv import load_dotenv
+import uvicorn
+import base64
 
-# Load variables from the .env file
 load_dotenv()
 
-app = FastAPI(
-    title="SajiloForm Core Engine",
-    description="Resilient multi-model data extraction backend for Nepalese identity documents.",
-    version="1.0.0"
-)
+app = FastAPI(title="SajiloForm Engine")
 
-# --------------------------------------------------------
-# 1. CORS Configuration for Frontend Connectivity
-# --------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Permits requests from your local frontend ports
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# --------------------------------------------------------
-# 2. Pydantic Target Output Schema
-# --------------------------------------------------------
-class ExtractedData(BaseModel):
-    first_name: str = Field(description="First name / Given names exactly as written on the document (in Devanagari script if the document is in Nepali)")
-    last_name: str = Field(description="Last name / Surname exactly as written on the document (in Devanagari script if the document is in Nepali)")
-    dob: str = Field(description="Date of Birth formatted strictly as YYYY-MM-DD. Convert Bikram Sambat (B.S.) to Gregorian (A.D.) if necessary.")
-    document_number: str = Field(description="The unique identification or certificate number of the document")
-    address: str = Field(description="Full permanent address exactly as listed on the document (in Devanagari script if written in Nepali)")
+# 🛠️ Define your structural schema
+class ExtractedIdentity(BaseModel):
+    first_name: str = Field(description="First name/Given name in native Devanagari script")
+    last_name: str = Field(description="Last name/Surname in native Devanagari script")
+    dob: str = Field(description="Date of birth exactly as written on the document")
+    document_number: str = Field(description="Identity or registration number")
+    address: str = Field(description="Permanent address in native Devanagari script")
 
-# --------------------------------------------------------
-# 3. High-Availability LiteLLM Router Setup (14 Unique Keys)
-# --------------------------------------------------------
+# 🔀 Configure the LiteLLM Router Pool
 model_list = [
-    # --- 7 NATIVE GOOGLE GEMINI DEPLOYMENTS ---
-    {"model_name": "nepal-document-extractor", "litellm_params": {"model": "gemini/gemini-2.5-flash", "api_key": os.getenv("GEMINI_KEY_1")}},
-    {"model_name": "nepal-document-extractor", "litellm_params": {"model": "gemini/gemini-2.5-flash", "api_key": os.getenv("GEMINI_KEY_2")}},
-    {"model_name": "nepal-document-extractor", "litellm_params": {"model": "gemini/gemini-2.5-flash", "api_key": os.getenv("GEMINI_KEY_3")}},
-    {"model_name": "nepal-document-extractor", "litellm_params": {"model": "gemini/gemini-2.5-flash", "api_key": os.getenv("GEMINI_KEY_4")}},
-    {"model_name": "nepal-document-extractor", "litellm_params": {"model": "gemini/gemini-2.5-pro", "api_key": os.getenv("GEMINI_KEY_5")}},
-    {"model_name": "nepal-document-extractor", "litellm_params": {"model": "gemini/gemini-3.5-flash", "api_key": os.getenv("GEMINI_KEY_6")}},
-    {"model_name": "nepal-document-extractor", "litellm_params": {"model": "gemini/gemini-3.5-flash", "api_key": os.getenv("GEMINI_KEY_7")}},
-
-    # (Comment out OpenRouter if you don't have active credits deposited there!)
+    {
+        "model_name": "sajiloform-ocr-pool",
+        "litellm_params": {
+            "model": "gemini/gemini-2.5-flash",
+            "api_key": os.getenv(f"GEMINI_KEY_{i}"),
+            "rpm": 15, # Safe guard limits per key if applicable
+        }
+    }
+    for i in range(1, 8) if os.getenv(f"GEMINI_KEY_{i}")
 ]
 
+# Initialize router with a simple-shuffle strategy and exponential backoff failover
 router = Router(
     model_list=model_list,
-    routing_strategy="simple-shuffle",  # Evenly distributes and randomizes API hits
-    allowed_fails=1,                    # Instantly flags a model deployment if it fails a request
-    cooldown_time=30,                   # Blocks a rate-limited endpoint for 30 seconds before re-trying
-    num_retries=3                       # Automatically transparently retries up to 3 alternate models on fail
+    routing_strategy="simple-shuffle",
+    num_retries=3,
+    allowed_fails=1
 )
 
-# --------------------------------------------------------
-# 4. Asynchronous Core API Endpoint
-# --------------------------------------------------------
-@app.post("/api/extract")
-async def extract_document_data(file: UploadFile = File(...)):
-    # Read the incoming image stream
-    contents = await file.read()
+@app.post("/api/v1/extract", response_model=ExtractedIdentity)
+async def extract_identity(file: UploadFile = File(...)):
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Invalid file format. Upload an image.")
     
-    # Safely convert raw image bytes to an encoded base64 Data URL payload
-    base64_image = base64.b64encode(contents).decode('utf-8')
-    image_data_url = f"data:{file.content_type};base64,{base64_image}"
-
-    # Optimized system instructions guiding the processing agent
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are an expert identity extraction agent specialized in Nepalese regulatory paperwork. "
-                "Analyze the uploaded document image (Citizenship Certificate, National ID, or Driver License) carefully. "
-                "Locate the text fields corresponding to the user's details. If text fields exist in both Devnagari and "
-                "English scripts, read the English fields or provide the direct English transliteration. "
-                "Extract all fields exactly as defined in the target format layout."
-            )
-        },
-        {
-            "role": "user",
-            "content": [
-                {"type": "text", "text": "Extract all data points matching the requested JSON structure from this document."},
-                {"type": "image_url", "image_url": {"url": image_data_url}}
-            ]
-        }
-    ]
-
     try:
-        # Route requests asynchronously through the resilient engine wrapper
+        image_bytes = await file.read()
+        
+        # 💡 FIX: Convert binary data to clean Base64 string format
+        base64_image = base64.b64encode(image_bytes).decode("utf-8")
+        
+        # Dispatch to the shuffled router pool
         response = await router.acompletion(
-            model="nepal-document-extractor",
-            messages=messages,
-            response_format={
-                "type": "json_object",
-                "response_schema": ExtractedData.model_json_schema()
-            },
-            temperature=0.0  # Zero out creativity for maximum text-extraction accuracy
+            model="sajiloform-ocr-pool",
+            messages=[
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Extract details from this Nepalese identity document. Output fields natively in Devanagari script where indicated."},
+                        {"type": "image_url", "image_url": {"url": f"data:{file.content_type};base64,{base64_image}"}} # Clean matching payload string
+                    ]
+                }
+            ],
+            response_format=ExtractedIdentity 
         )
         
-        # Parse output safely into standard computer-readable Python dictionary
-        raw_json_string = response.choices[0].message.content
-        extracted_object = json.loads(raw_json_string)
-        
-        return {"status": "success", "data": extracted_object}
+        # Parse output safely via JSON structural translation layer
+        return ExtractedIdentity.model_validate_json(response.choices[0].message.content)
 
     except Exception as e:
-        # Catches routing failures and returns structural debug diagnostics to frontend
-        raise HTTPException(status_code=500, detail=f"Extraction Engine Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Extraction pipeline failure: {str(e)}")
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=True)
