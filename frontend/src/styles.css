@@ -1,0 +1,128 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-crimson: var(--crimson);
+  --color-royal: var(--royal);
+  --color-saffron: var(--saffron);
+  --color-cream: var(--cream);
+  --font-display: "Yatra One", "Poppins", system-ui, sans-serif;
+  --font-devanagari: "Mukta", "Poppins", system-ui, sans-serif;
+}
+
+:root {
+  --radius: 1rem;
+  --background: oklch(0.99 0.01 80);
+  --foreground: oklch(0.18 0.03 20);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.03 20);
+  --primary: oklch(0.5 0.22 25);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.38 0.19 265);
+  --secondary-foreground: oklch(0.99 0 0);
+  --muted: oklch(0.96 0.02 60);
+  --muted-foreground: oklch(0.45 0.03 20);
+  --accent: oklch(0.95 0.05 70);
+  --accent-foreground: oklch(0.2 0.03 20);
+  --destructive: oklch(0.55 0.22 25);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.9 0.02 40);
+  --input: oklch(0.92 0.02 40);
+  --ring: oklch(0.5 0.22 25);
+
+  --crimson: oklch(0.5 0.22 25);
+  --royal: oklch(0.38 0.19 265);
+  --saffron: oklch(0.75 0.16 60);
+  --cream: oklch(0.98 0.02 80);
+}
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html { font-family: var(--font-devanagari); }
+  body {
+    background:
+      radial-gradient(1200px 600px at 90% -10%, color-mix(in oklch, var(--crimson) 12%, transparent), transparent),
+      radial-gradient(1000px 500px at -10% 110%, color-mix(in oklch, var(--royal) 12%, transparent), transparent),
+      var(--color-background);
+    color: var(--color-foreground);
+    min-height: 100dvh;
+  }
+  h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.01em; }
+}
+
+@utility glass {
+  background: color-mix(in oklch, white 75%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid color-mix(in oklch, white 60%, transparent);
+  box-shadow: 0 10px 40px -20px color-mix(in oklch, var(--royal) 40%, transparent);
+}
+
+@utility gradient-nepal {
+  background: linear-gradient(135deg, var(--crimson), var(--royal));
+}
+
+@utility text-gradient-nepal {
+  background: linear-gradient(135deg, var(--crimson), var(--royal));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@keyframes scan {
+  0% { transform: translateY(0); opacity: 0.9; }
+  50% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0.9; }
+}
+@utility scan-line {
+  animation: scan 2.2s ease-in-out infinite;
+}
+
+@keyframes pulseRing {
+  0% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--crimson) 55%, transparent); }
+  70% { box-shadow: 0 0 0 24px color-mix(in oklch, var(--crimson) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in oklch, var(--crimson) 0%, transparent); }
+}
+@utility pulse-ring {
+  animation: pulseRing 1.8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes wave {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+@utility bar-wave {
+  animation: wave 0.9s ease-in-out infinite;
+  transform-origin: center;
+}
+
+@keyframes floaty {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@utility floaty { animation: floaty 4s ease-in-out infinite; }
