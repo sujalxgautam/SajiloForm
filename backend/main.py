@@ -31,11 +31,11 @@ app.add_middleware(
 # 2. Pydantic Target Output Schema
 # --------------------------------------------------------
 class ExtractedData(BaseModel):
-    first_name: str = Field(description="First name/Given names in English script")
-    last_name: str = Field(description="Last name/Surname in English script")
-    dob: str = Field(description="Date of Birth formatted strictly as YYYY-MM-DD")
-    document_number: str = Field(description="The identification or certificate number of the document")
-    address: str = Field(description="Full permanent address text translated or written in English")
+    first_name: str = Field(description="First name / Given names exactly as written on the document (in Devanagari script if the document is in Nepali)")
+    last_name: str = Field(description="Last name / Surname exactly as written on the document (in Devanagari script if the document is in Nepali)")
+    dob: str = Field(description="Date of Birth formatted strictly as YYYY-MM-DD. Convert Bikram Sambat (B.S.) to Gregorian (A.D.) if necessary.")
+    document_number: str = Field(description="The unique identification or certificate number of the document")
+    address: str = Field(description="Full permanent address exactly as listed on the document (in Devanagari script if written in Nepali)")
 
 # --------------------------------------------------------
 # 3. High-Availability LiteLLM Router Setup (14 Unique Keys)
