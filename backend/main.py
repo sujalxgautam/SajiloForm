@@ -2,6 +2,7 @@
 from dotenv import load_dotenv
 load_dotenv() # This loads our keys from the .env file
 from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import logging
 # Add this near the top of your main.py to hide those specific warnings
 logging.getLogger("LiteLLM").setLevel(logging.ERROR)
@@ -12,7 +13,22 @@ from backend.engine import extract_document, router
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
+
 app = FastAPI()
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:8080",  # Your frontend dev server
+        "http://localhost:5173",  # Vite default
+        "http://localhost:3000",  # Alternative port
+        "*"  # For development only - remove in production
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.post("/api/v1/extract", response_model=ExtractedIdentity)
 async def extract_identity(file: UploadFile = File(...)):
@@ -51,7 +67,6 @@ async def health_check():
         "version": "1.0.0",
         "description": "SajiloForm Backend API"
     }
-
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
