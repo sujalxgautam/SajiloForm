@@ -1,31 +1,29 @@
-# 🚀 SajiloForm
+# 🚀 SajiloForm – AI Document Intelligence for Nepal
 
-**AI-powered Document Intelligence for Nepal**
-
-SajiloForm is an intelligent document processing system that automates data extraction from Nepalese identity documents (Citizenship, National ID, Passport, Bank KYC) using AI. Built for government and B2B integration.
+**SajiloForm** is an AI-powered middleware that automatically extracts identity document data (Citizenship, Passport, Bank KYC) using state-of-the-art language models. Built as a modular SDK for seamless integration into government and enterprise systems.
 
 ## ✨ Features
 
-- **🤖 AI-Powered Extraction**: Uses Google Gemini 2.5 Flash with load balancing across 7 API keys
-- **📄 Multi-Document Support**: National ID, Passport, Bank KYC forms
-- **🌐 Bilingual**: Full support for English and Nepali (नेपाली)
-- **📤 Smart Upload**: Drag & drop multiple images with real-time processing
-- **🎯 High Accuracy**: Confidence scoring for extracted data
-- **🏦 Enterprise Ready**: Modular architecture for SDK integration
+- 🤖 **AI-Powered Extraction** – Uses Gemini 2.5 Flash with intelligent load balancing across 7 API keys.
+- 📄 **Multi‑Document Support** – National ID, Passport, Bank KYC forms.
+- 🌐 **Bilingual Interface** – Full support for English and Nepali (नेपाली).
+- 📤 **Smart Upload** – Drag & drop multiple images with real‑time processing and confidence scores.
+- 🎯 **High Accuracy** – Confidence scoring for every extracted field.
+- 🏦 **Enterprise Ready** – Modular architecture, easy SDK integration.
 
 ## 🛠 Tech Stack
 
 ### Backend
-- **Framework**: FastAPI (Python 3.13)
-- **AI Engine**: LiteLLM Router with Gemini 2.5 Flash
-- **Validation**: Pydantic
-- **Server**: Uvicorn
+- **Framework:** FastAPI (Python 3.13)
+- **AI Engine:** LiteLLM Router with Gemini 2.5 Flash
+- **Validation:** Pydantic
+- **Server:** Uvicorn
 
 ### Frontend
-- **Framework**: React 19 with Vite
-- **Styling**: Pure CSS (No Tailwind)
-- **HTTP Client**: Axios
-- **File Upload**: React Dropzone
+- **Framework:** React 19 with Vite
+- **Styling:** Pure CSS (custom glass‑morphism design)
+- **HTTP Client:** Axios
+- **File Upload:** React Dropzone
 
 ## 📦 Installation
 
