@@ -439,8 +439,8 @@ function App() {
         boxShadow: '0 8px 32px rgba(79, 70, 229, 0.12), 0 1px 3px rgba(0,0,0,0.04)',
         border: '1px solid rgba(255,255,255,0.7)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <Logo size={48} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1px' }}>
+          <Logo size={200} />
           <div>
             <h1 style={{ 
               margin: 0, 
