@@ -126,3 +126,12 @@
   50% { transform: translateY(-8px); }
 }
 @utility floaty { animation: floaty 4s ease-in-out infinite; }
+
+@keyframes floaty {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-floaty {
+  animation: floaty 3s ease-in-out infinite;
+}
