@@ -181,9 +181,7 @@ function App() {
       setImages(prev =>
         prev.map(img => img.id === image.id ? { ...img, status: 'completed', data } : img)
       );
-      // Auto-detect form
       detectAndSwitchForm(data);
-      // Auto-detect side
       const side = detectSide(data);
       setImages(prev =>
         prev.map(img => img.id === image.id ? { ...img, side } : img)
@@ -240,6 +238,24 @@ function App() {
 
   const selectImage = (id) => setSelectedImageId(id);
 
+  // ---------- CONFIDENCE HELPERS ----------
+  const getConfidenceLevel = (score) => {
+    if (score >= 0.85) return { level: 'high', color: '#10B981', label: 'High', emoji: '✅' };
+    if (score >= 0.60) return { level: 'medium', color: '#F59E0B', label: 'Medium', emoji: '⚠️' };
+    if (score >= 0.30) return { level: 'low', color: '#EF4444', label: 'Low', emoji: '🔴' };
+    return { level: 'very-low', color: '#DC2626', label: 'Very Low', emoji: '🚨' };
+  };
+
+  const getConfidenceMessage = (level) => {
+    switch(level) {
+      case 'high': return 'AI is confident in this extraction.';
+      case 'medium': return 'AI is moderately confident. Please verify key fields.';
+      case 'low': return 'AI has low confidence. Please review all fields carefully.';
+      case 'very-low': return 'AI could not extract reliably. Please re‑upload a clearer image.';
+      default: return '';
+    }
+  };
+
   // ---------- ADDRESS EXTRACTION HELPERS ----------
   const extractProvince = (address) => {
     if (!address) return '';
@@ -263,29 +279,30 @@ function App() {
     return '';
   };
 
+  // ... (rest of your code unchanged)
+
   const extractMunicipality = (address) => {
     if (!address) return '';
     const patterns = [
       /Municipality\s*[,:]\s*([^,]+?)(?:\s*[,)]|$)/i,
+      /Municipality\s+([^,]+?)(?:\s*[,)]|$)/i,
       /Metropolis\s*[,:]\s*([^,]+?)(?:\s*[,)]|$)/i,
       /Sub[-\s]Metropolis\s*[,:]\s*([^,]+?)(?:\s*[,)]|$)/i,
       /VDC\s*[,:]\s*([^,]+?)(?:\s*[,)]|$)/i,
       /Nagar\s*([^,]+?)(?:\s*[,)]|$)/i,
     ];
-    for (const p of patterns) {
-      const m = address.match(p);
-      if (m) return m[1].trim();
-    }
-    if (address.includes('Ward No.')) {
-      const parts = address.split('Ward No.');
-      if (parts.length) {
-        const mp = parts[0].trim();
-        const lastComma = mp.lastIndexOf(',');
-        return lastComma !== -1 ? mp.substring(lastComma + 1).trim() : mp;
+    for (const pattern of patterns) {
+      const match = address.match(pattern);
+      if (match) {
+        let mun = match[1].trim();
+        mun = mun.replace(/,$/, '').trim();
+        if (mun) return mun;
       }
     }
     return '';
   };
+
+// ... (rest unchanged)
 
   const extractWard = (address) => {
     if (!address) return '';
@@ -295,9 +312,9 @@ function App() {
       /वडा\s*नं\.?\s*([\d]+)/i,
       /वडा\s*([\d]+)/i,
     ];
-    for (const p of patterns) {
-      const m = address.match(p);
-      if (m) return m[1];
+    for (const pattern of patterns) {
+      const match = address.match(pattern);
+      if (match) return match[1];
     }
     return '';
   };
@@ -343,7 +360,7 @@ function App() {
   // ==================== RENDER ====================
   return (
     <div className="app-background">
-      {/* ---- ENHANCED HEADER ---- */}
+      {/* ---- HEADER ---- */}
       <div style={{
         background: 'rgba(255,255,255,0.92)',
         backdropFilter: 'blur(24px)',
@@ -443,7 +460,7 @@ function App() {
         </button>
       </div>
 
-      {/* ---- TABS (unchanged) ---- */}
+      {/* ---- TABS ---- */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(3, 1fr)',
@@ -504,7 +521,7 @@ function App() {
         })}
       </div>
 
-      {/* ---- MAIN GRID (unchanged) ---- */}
+      {/* ---- MAIN GRID ---- */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '28px' }}>
         {/* UPLOAD SECTION */}
         <div>
@@ -600,7 +617,6 @@ function App() {
                   }}
                 >
                   <img src={img.preview} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  {/* Side badge */}
                   {img.side && (
                     <div style={{
                       position: 'absolute',
@@ -617,7 +633,6 @@ function App() {
                       {img.side}
                     </div>
                   )}
-                  {/* Toggle side button */}
                   <button
                     onClick={(e) => { e.stopPropagation(); toggleSide(img.id); }}
                     style={{
@@ -716,29 +731,51 @@ function App() {
             {(() => {
               const selected = images.find(img => img.id === selectedImageId);
               const data = selected?.data;
-              return data?.confidence_score > 0 && (
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  background: 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%)',
-                  padding: '8px 16px',
-                  borderRadius: '100px',
-                  border: '1px solid #A7F3D0'
-                }}>
-                  <span style={{ fontSize: '14px' }}>🎯</span>
-                  <div style={{ width: '60px', height: '6px', background: '#D1FAE5', borderRadius: '8px', overflow: 'hidden' }}>
-                    <div style={{
-                      height: '100%',
-                      background: 'linear-gradient(90deg, #10B981, #059669)',
-                      borderRadius: '8px',
-                      width: `${data.confidence_score * 100}%`,
-                      transition: 'width 1s'
-                    }} />
+              const score = data?.confidence_score || 0;
+              const level = getConfidenceLevel(score);
+              if (score === 0) return null;
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    background: `linear-gradient(135deg, ${level.color}15, ${level.color}25)`,
+                    padding: '8px 16px',
+                    borderRadius: '100px',
+                    border: `1.5px solid ${level.color}40`
+                  }}>
+                    <span style={{ fontSize: '16px' }}>{level.emoji}</span>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: level.color }}>
+                      {level.label} Confidence
+                    </span>
+                    <div style={{ width: '50px', height: '6px', background: `${level.color}30`, borderRadius: '8px', overflow: 'hidden' }}>
+                      <div style={{
+                        height: '100%',
+                        background: level.color,
+                        borderRadius: '8px',
+                        width: `${score * 100}%`,
+                        transition: 'width 1s'
+                      }} />
+                    </div>
+                    <span style={{ fontSize: '13px', fontWeight: '600', color: level.color }}>
+                      {Math.round(score * 100)}%
+                    </span>
                   </div>
-                  <span style={{ fontSize: '13px', fontWeight: '600', color: '#065F46' }}>
-                    {Math.round(data.confidence_score * 100)}%
-                  </span>
+                  {(level.level === 'low' || level.level === 'very-low') && (
+                    <div style={{
+                      fontSize: '12px',
+                      color: level.color,
+                      background: `${level.color}10`,
+                      padding: '4px 14px',
+                      borderRadius: '100px',
+                      border: `1px solid ${level.color}30`,
+                      maxWidth: '280px',
+                      textAlign: 'center'
+                    }}>
+                      {getConfidenceMessage(level.level)}
+                    </div>
+                  )}
                 </div>
               );
             })()}
@@ -768,13 +805,27 @@ function App() {
                   const value = getFieldValue(fieldKey);
                   const isFilled = value && value.length > 0;
                   const label = labels[fieldKey] || fieldKey;
+                  const selected = images.find(img => img.id === selectedImageId);
+                  const score = selected?.data?.confidence_score || 0;
+                  const level = getConfidenceLevel(score);
+                  
                   return (
                     <div key={fieldKey} style={{ gridColumn: fieldKey === 'address' || fieldKey === 'full_name' ? '1 / -1' : 'auto', marginBottom: '4px' }}>
                       <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '13px', fontWeight: '500', color: '#374151', marginBottom: '6px' }}>
                         <span>{label}</span>
                         {isFilled && (
-                          <span style={{ fontSize: '10px', fontWeight: '500', color: '#059669', background: '#ECFDF5', padding: '2px 10px', borderRadius: '100px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <span style={{ fontSize: '10px' }}>✅</span>Auto-filled
+                          <span style={{
+                            fontSize: '10px',
+                            fontWeight: '500',
+                            color: level.color,
+                            background: `${level.color}15`,
+                            padding: '2px 10px',
+                            borderRadius: '100px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}>
+                            {level.emoji} {level.label}
                           </span>
                         )}
                       </label>
@@ -783,11 +834,11 @@ function App() {
                         style={{
                           width: '100%',
                           padding: '10px 14px',
-                          border: `1.5px solid ${isFilled ? '#6EE7B7' : '#E5E7EB'}`,
+                          border: `1.5px solid ${isFilled ? (level.level === 'high' ? '#6EE7B7' : level.level === 'medium' ? '#FCD34D' : '#FCA5A5') : '#E5E7EB'}`,
                           borderRadius: '12px',
                           fontSize: '14px',
                           color: '#1F2937',
-                          background: isFilled ? 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 50%)' : '#F9FAFB',
+                          background: isFilled ? (level.level === 'high' ? 'linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 50%)' : level.level === 'medium' ? 'linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 50%)' : 'linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 50%)') : '#F9FAFB',
                           outline: 'none',
                           transition: 'all 0.2s'
                         }}
